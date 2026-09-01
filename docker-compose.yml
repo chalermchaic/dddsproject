@@ -1,0 +1,14 @@
+services:
+  crm-app:
+    build: .
+    container_name: smart-crm
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./db:/app/db          # ให้ข้อมูลคงอยู่หลัง restart
+      - ./analytics:/app/analytics
+      - ./pages:/app/pages
+      - ./app.py:/app/app.py
+    environment:
+      - CRM_DB_PATH=/app/db/crm.db
+    restart: unless-stopped
