@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import sqlite3
 import sys
 import zipfile
 from datetime import datetime
@@ -31,11 +32,13 @@ REQUIRED_FILES = [
     "db/seed_data.py",
     "db/connection.py",
     "db/__init__.py",
+    "auth.py",
     "analytics/__init__.py",
     "analytics/lead_scoring.py",
     "analytics/rfm_segmentation.py",
     "analytics/churn_health.py",
     "analytics/campaign_roi.py",
+    "pages/0_🏠_Home.py",
     "pages/1_📢_Marketing.py",
     "pages/2_📞_Sales_Followup.py",
     "pages/3_🧾_Order_Billing.py",
@@ -48,10 +51,17 @@ REQUIRED_FILES = [
 # โมดูลที่ต้อง import ได้ (ไม่ต้องมี DB — แค่ syntax/deps ครบ)
 IMPORT_CHECKS = [
     "db.connection",
+    "auth",
     "analytics.lead_scoring",
     "analytics.rfm_segmentation",
     "analytics.churn_health",
     "analytics.campaign_roi",
+]
+
+# ตารางที่ต้องมีในฐานข้อมูล (ตรวจเมื่อ db/crm.db มีอยู่แล้ว)
+REQUIRED_TABLES = [
+    "EMPLOYEE", "CAMPAIGN", "PRODUCT", "LEAD", "LEAD_ACTIVITY",
+    "SALE", "SALE_DETAIL", "CUSTOMER", "TICKET", "TICKET_MESSAGE",
 ]
 
 # สิ่งที่ไม่แพ็กลง zip
@@ -81,18 +91,41 @@ def check_imports() -> list[str]:
     return failed
 
 
+def check_database() -> list[str]:
+    """ตรวจตารางในฐานข้อมูล — ข้ามถ้ายังไม่มี db/crm.db"""
+    db = ROOT / "db" / "crm.db"
+    if not db.exists():
+        print("  ⏭️  ข้าม (ยังไม่มี db/crm.db — รัน `python db/seed_data.py`)")
+        return []
+    con = sqlite3.connect(db)
+    have = {r[0] for r in con.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    con.close()
+    problems = []
+    for t in REQUIRED_TABLES:
+        ok = t in have
+        print(f"  {'✅' if ok else '❌'} table {t}")
+        if not ok:
+            problems.append(t)
+    return problems
+
+
 def run_check() -> bool:
     print("── ตรวจไฟล์ที่จำเป็น ─────────────────────────────")
     missing = check_files()
     print("\n── ตรวจการ import โมดูลหลัก ─────────────────────")
     failed = check_imports()
+    print("\n── ตรวจตารางฐานข้อมูล ──────────────────────────")
+    bad_tables = check_database()
 
     print()
     if missing:
         print(f"❌ ไฟล์ขาด {len(missing)} รายการ: {', '.join(missing)}")
     if failed:
         print(f"❌ import ไม่ผ่าน {len(failed)} โมดูล")
-    if not missing and not failed:
+    if bad_tables:
+        print(f"❌ ตารางขาด: {', '.join(bad_tables)}")
+    if not missing and not failed and not bad_tables:
         print("✅ ผ่านทั้งหมด — โปรเจกต์พร้อมรัน (อย่าลืม `python db/seed_data.py` ก่อนครั้งแรก)")
         return True
     return False
