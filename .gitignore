@@ -58,3 +58,6 @@ Thumbs.db
 
 # Planning / scratch notes
 response*.md
+
+# Binary design exports (keep the .md/.txt text versions in git instead)
+*.pdf
