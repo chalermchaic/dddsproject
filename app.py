@@ -2,11 +2,16 @@
 Smart CRM Analytics — Home
 รัน: streamlit run app.py
 """
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from db.connection import cached_query, table_counts
+
+_version_file = Path(__file__).parent / "VERSION"
+APP_VERSION = _version_file.read_text(encoding="utf-8").strip() if _version_file.exists() else "dev"
 
 st.set_page_config(page_title="Smart CRM Analytics",
                    page_icon="📈", layout="wide",
@@ -22,7 +27,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("📈 Smart CRM Analytics")
-st.caption("ระบบบริหารความสัมพันธ์ลูกค้า พร้อมการวิเคราะห์ข้อมูลด้วย Machine Learning")
+st.caption(f"ระบบบริหารความสัมพันธ์ลูกค้า พร้อมการวิเคราะห์ข้อมูลด้วย Machine Learning · v{APP_VERSION}")
 
 # ================= KPI แถวบน =================
 KPI_SQL = """
@@ -122,3 +127,4 @@ with st.sidebar:
         st.success("ล้างแคชแล้ว")
         st.rerun()
     st.caption("ฐานข้อมูล: SQLite · `db/crm.db`")
+    st.caption(f"Smart CRM Analytics · เวอร์ชัน {APP_VERSION}")
