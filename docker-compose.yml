@@ -5,10 +5,12 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - ./db:/app/db          # ให้ข้อมูลคงอยู่หลัง restart
+      - ./db:/app/db          # ให้ข้อมูล (db/crm.db) คงอยู่หลัง restart
       - ./analytics:/app/analytics
       - ./pages:/app/pages
       - ./app.py:/app/app.py
     environment:
       - CRM_DB_PATH=/app/db/crm.db
+      - TZ=Asia/Bangkok
+      - PYTHONUTF8=1
     restart: unless-stopped

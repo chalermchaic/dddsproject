@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+.venv/
+venv/
+.idea/
+.vscode/
+db/crm.db
+db/crm.db-wal
+db/crm.db-shm
+*.zip
+response*.md
+.claude/
