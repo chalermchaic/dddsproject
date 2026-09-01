@@ -133,6 +133,11 @@
 | `Employee_Name` | VARCHAR(100) | - | NO | ชื่อ-นามสกุลพนักงาน |
 | `Position` | VARCHAR(50) | - | NO | ตำแหน่งงาน (เช่น 'พนักงานขาย', 'ช่างเทคนิค', 'นักการตลาด') |
 | `Department` | VARCHAR(50) | - | NO | สังกัดฝ่าย ('ฝ่ายการตลาด' / 'ฝ่ายขาย' / 'ฝ่ายบริการลูกค้า' — ตรงกับ External Entity 3 ฝ่ายใน DFD) |
+| `Username` | VARCHAR(50) | Unique | NO | ชื่อบัญชีเข้าใช้งานระบบ (field ชั้น application/auth) |
+| `Role` | VARCHAR(20) | - | NO | สิทธิ์การใช้งาน: `admin` / `marketing` / `sales` / `support` (field ชั้น application/auth) |
+
+> **หมายเหตุ:** `Username` และ `Role` เป็นแอตทริบิวต์ที่เพิ่มในชั้นแอปพลิเคชันเพื่อรองรับการเข้าสู่ระบบตามบทบาท
+> (1 บัญชี = 1 แถวใน `EMPLOYEE`) ไม่ใช่ข้อมูลเชิงธุรกิจ (HR) โดยตรง
 
 ---
 

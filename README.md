@@ -46,18 +46,42 @@ streamlit run app.py
 ### ตรวจความพร้อมของโปรเจกต์
 
 ```bash
-python bootstrap.py --check      # ตรวจว่าไฟล์สำคัญครบและ import ผ่าน
+python bootstrap.py --check      # ตรวจว่าไฟล์สำคัญครบ / import ผ่าน / ตารางครบ
 python bootstrap.py              # แพ็กเป็น .zip สำหรับส่งงาน
 ```
+
+---
+
+## 🔐 การเข้าใช้งานตาม Role
+
+เปิดแอปแล้วจะเจอหน้า **เลือกบัญชีผู้ใช้** ก่อน (prototype สาธิต — ไม่มีรหัสผ่าน)
+แต่ละบัญชีเป็น 1 แถวในตาราง `EMPLOYEE` และ `Role` กำหนดว่าเห็นเมนูหน้าไหน:
+
+| หน้า | admin | marketing | sales | support |
+| :--- | :---: | :---: | :---: | :---: |
+| 🏠 ภาพรวม | ✓ | ✓ | ✓ | ✓ |
+| 📢 งานการตลาด | ✓ | ✓ | | |
+| 📞 ติดตามการขาย | ✓ | | ✓ | |
+| 🧾 ใบเสนอราคา/ชำระเงิน | ✓ | | ✓ | |
+| 👤 ข้อมูลลูกค้า | ✓ | ✓ | ✓ | ✓ |
+| 🎫 รับแจ้งปัญหา | ✓ | | | ✓ |
+| 📊 แดชบอร์ดวิเคราะห์ | ✓ | ✓ | ✓ | ✓ |
+
+**บัญชี demo** (สร้างโดย `db/seed_data.py`): `admin1` · `marketing1` `marketing2` ·
+`sale1` `sale2` `sale3` `sale4` · `cs1` `cs2` `cs3`
+
+เมื่อล็อกอินแล้ว การบันทึกงาน (สร้างแคมเปญ / บันทึกกิจกรรม / ออกใบเสนอราคา / รับเคส)
+จะผูก `Employee_ID` ของผู้ใช้ที่ล็อกอินให้อัตโนมัติ
 
 ---
 
 ## 🧩 โครงสร้าง
 
 ```
-app.py                     Streamlit entry point (หน้า Home + KPI)
+app.py                     entry point / router — หน้า login + st.navigation ตาม role
+auth.py                    login/session/role → เมนูที่มองเห็น
 db/
-  schema.sql               DDL ตาม Data Dictionary D1–D5 + Views (V_LEAD_FEATURES ฯลฯ)
+  schema.sql               DDL ตาม Data Dictionary (10 entities รวม EMPLOYEE) + Views
   seed_data.py             สร้างฐานข้อมูล + ข้อมูลจำลอง (~600 leads, reproducible seed=42)
   connection.py            helper: get_conn / run_query / execute / next_id / cached_query
 analytics/
@@ -66,6 +90,7 @@ analytics/
   churn_health.py          งานที่ 3 — Customer Health Score (0–100) + churn risk
   campaign_roi.py          งานที่ 4 — Conversion / CPL / CAC / ROAS / ROI + chi-square
 pages/
+  0_🏠_Home.py              ภาพรวม + KPI (หน้าแรกหลังล็อกอิน)
   1_📢_Marketing.py         Process 1.0 — แคมเปญ + บันทึกผู้สนใจ
   2_📞_Sales_Followup.py    Process 2.0 — คิวงานจัดลำดับด้วย ML + บันทึกกิจกรรม
   3_🧾_Order_Billing.py     Process 3.0 — ใบเสนอราคา + ยืนยันชำระเงิน
