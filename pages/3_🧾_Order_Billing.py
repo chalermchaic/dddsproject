@@ -4,10 +4,12 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+import auth
 from db.connection import cached_query, execute, next_id, run_query
 
-st.set_page_config(page_title="Order & Billing", page_icon="🧾", layout="wide")
+emp = auth.guard("admin", "sales")
 st.title("🧾 ใบเสนอราคาและการชำระเงิน")
+st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
 tab1, tab2, tab3 = st.tabs(["📝 ออกใบเสนอราคา", "💳 ยืนยันการชำระเงิน", "📚 ประวัติการขาย"])
 
@@ -56,9 +58,9 @@ with tab1:
         if st.button("🧾 ออกใบเสนอราคา", type="primary", use_container_width=True):
             sid = next_id("SALE", "Sale_ID", "SL", 4)
             no = sid[2:]
-            execute("""INSERT INTO SALE VALUES (?,?,?,?,?,?,?,?,?)""",
-                    (sid, row.Lead_ID, f"QT-{qdate.year}-{no}", str(qdate),
-                     round(total, 2), "ออกใบเสนอราคาแล้ว", None, None, None))
+            execute("""INSERT INTO SALE VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (sid, row.Lead_ID, emp["employee_id"], f"QT-{qdate.year}-{no}",
+                     str(qdate), round(total, 2), "ออกใบเสนอราคาแล้ว", None, None, None))
             execute_rows = [(sid, pid, q, u, s) for pid, q, u, s in items]
             for r in execute_rows:
                 execute("INSERT INTO SALE_DETAIL VALUES (?,?,?,?,?)", r)

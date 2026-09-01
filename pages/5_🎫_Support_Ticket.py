@@ -3,14 +3,21 @@ from datetime import date, datetime
 import plotly.express as px
 import streamlit as st
 
+import auth
 from db.connection import cached_query, execute, next_id, run_query
 
-st.set_page_config(page_title="Support Ticket", page_icon="🎫", layout="wide")
+emp = auth.guard("admin", "support")
 st.title("🎫 ระบบรับแจ้งปัญหา")
+st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
-SUPPORT = ["ศุภชัย ซัพพอร์ต", "มณีรัตน์ ช่วยเหลือ", "กิตติพงษ์ เทคนิค"]
 CATS = ["ระบบขัดข้อง", "สินค้าชำรุด", "ขอข้อมูลเพิ่ม"]
 STATUSES = ["รอดำเนินการ", "กำลังแก้ไข", "ปิดเคสสำเร็จ"]
+
+# ทีมบริการลูกค้า (สำหรับมอบหมายเคส)  ชื่อ -> Employee_ID
+_sup = run_query("SELECT Employee_ID, Employee_Name FROM EMPLOYEE "
+                 "WHERE Role='support' ORDER BY Employee_Name")
+SUPPORT_OPTS = {r.Employee_Name: r.Employee_ID for r in _sup.itertuples()}
+SUPPORT_NAMES = list(SUPPORT_OPTS)
 
 k = cached_query("""
     SELECT COUNT(*) AS total,
@@ -36,10 +43,13 @@ with tab1:
     fc = f2.multiselect("ประเภทปัญหา", CATS, default=CATS)
 
     q = """SELECT t.Ticket_ID, t.Problem_Category, t.Problem_Title, t.Ticket_Status,
-                  t.Assigned_Staff, t.Created_At, cu.Company_Name, l.Full_Name
+                  e.Employee_Name AS Assigned_Staff, t.Created_At,
+                  cu.Company_Name, l.Full_Name
            FROM TICKET t
-           JOIN CUSTOMER cu ON cu.Customer_ID=t.Customer_ID
-           JOIN LEAD l      ON l.Lead_ID=cu.Lead_ID WHERE 1=1"""
+           JOIN CUSTOMER cu     ON cu.Customer_ID=t.Customer_ID
+           JOIN LEAD l          ON l.Lead_ID=cu.Lead_ID
+           LEFT JOIN EMPLOYEE e ON e.Employee_ID=t.Employee_ID
+           WHERE 1=1"""
     p = []
     if fs:
         q += f" AND t.Ticket_Status IN ({','.join('?'*len(fs))})"; p += fs
@@ -80,7 +90,7 @@ with tab1:
                 execute("""INSERT INTO TICKET_MESSAGE
                            (Message_ID,Ticket_ID,Sender_Type,Sender_Name,
                             Message_Text,Sent_At) VALUES (?,?,?,?,?,?)""",
-                        (mid, tid, "Support_Staff", trow.Assigned_Staff or SUPPORT[0],
+                        (mid, tid, "Support_Staff", emp["name"],
                          new_msg, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                 st.cache_data.clear()
                 st.rerun()
@@ -89,16 +99,17 @@ with tab1:
             st.markdown("#### ⚙️ จัดการเคส")
             with st.form("upd"):
                 ns = st.selectbox("สถานะ", STATUSES, index=STATUSES.index(trow.Ticket_Status))
-                staff = st.selectbox("ผู้รับผิดชอบ", SUPPORT,
-                                     index=SUPPORT.index(trow.Assigned_Staff)
-                                     if trow.Assigned_Staff in SUPPORT else 0)
+                _cur = trow.Assigned_Staff if trow.Assigned_Staff in SUPPORT_NAMES else None
+                staff_name = st.selectbox(
+                    "ผู้รับผิดชอบ", SUPPORT_NAMES,
+                    index=SUPPORT_NAMES.index(_cur) if _cur else 0)
                 cdate = st.date_input("วันที่ปิดเคส", value=date.today())
                 if st.form_submit_button("💾 อัปเดต", type="primary",
                                          use_container_width=True):
                     closed = f"{cdate} 17:00:00" if ns == "ปิดเคสสำเร็จ" else None
-                    execute("""UPDATE TICKET SET Ticket_Status=?, Assigned_Staff=?,
+                    execute("""UPDATE TICKET SET Ticket_Status=?, Employee_ID=?,
                                Closed_At=? WHERE Ticket_ID=?""",
-                            (ns, staff, closed, tid))
+                            (ns, SUPPORT_OPTS[staff_name], closed, tid))
                     st.cache_data.clear()
                     st.success("อัปเดตเคสแล้ว")
                     st.rerun()
@@ -118,7 +129,7 @@ with tab2:
                             (ps.Product_ID + " — " + ps.Product_Name).tolist())
         title = st.text_input("หัวข้อปัญหา *")
         detail = st.text_area("รายละเอียดจากลูกค้า", height=100)
-        staff = st.selectbox("มอบหมายให้", SUPPORT)
+        assignee = st.selectbox("มอบหมายให้", ["— ยังไม่มอบหมาย —"] + SUPPORT_NAMES)
 
         if st.form_submit_button("🎫 เปิดเคส", type="primary", use_container_width=True):
             if not title.strip():
@@ -126,10 +137,11 @@ with tab2:
             else:
                 tid = next_id("TICKET", "Ticket_ID", "TK", 4)
                 now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                emp_id = SUPPORT_OPTS.get(assignee)   # None ถ้ายังไม่มอบหมาย
                 execute("INSERT INTO TICKET VALUES (?,?,?,?,?,?,?,?,?)",
                         (tid, cust.split(" — ")[0],
                          None if prod.startswith("—") else prod.split(" — ")[0],
-                         cat, title.strip(), "รอดำเนินการ", staff, now, None))
+                         cat, title.strip(), "รอดำเนินการ", emp_id, now, None))
                 if detail.strip():
                     mid = next_id("TICKET_MESSAGE", "Message_ID", "MSG", 5)
                     execute("""INSERT INTO TICKET_MESSAGE
@@ -148,11 +160,13 @@ with tab3:
         st.plotly_chart(px.pie(d, names="ประเภท", values="จำนวน", hole=.5,
                                title="สัดส่วนประเภทปัญหา"), use_container_width=True)
     with c2:
-        d = cached_query("""SELECT Assigned_Staff AS พนักงาน, COUNT(*) AS เคสทั้งหมด,
-                                   SUM(Ticket_Status='ปิดเคสสำเร็จ') AS ปิดสำเร็จ,
-                                   ROUND(AVG(julianday(Closed_At)-julianday(Created_At)),2)
+        d = cached_query("""SELECT e.Employee_Name AS พนักงาน, COUNT(*) AS เคสทั้งหมด,
+                                   SUM(t.Ticket_Status='ปิดเคสสำเร็จ') AS ปิดสำเร็จ,
+                                   ROUND(AVG(julianday(t.Closed_At)-julianday(t.Created_At)),2)
                                         AS 'เวลาเฉลี่ย (วัน)'
-                            FROM TICKET GROUP BY Assigned_Staff""")
+                            FROM TICKET t
+                            JOIN EMPLOYEE e ON e.Employee_ID = t.Employee_ID
+                            GROUP BY e.Employee_ID""")
         st.markdown("#### ผลงานทีมซัพพอร์ต")
         st.dataframe(d, use_container_width=True, hide_index=True)
 

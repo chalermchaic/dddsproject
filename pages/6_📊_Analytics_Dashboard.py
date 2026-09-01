@@ -3,12 +3,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import auth
 from analytics import campaign_roi as roi
 from analytics import churn_health as ch
 from analytics import lead_scoring as ls
 from analytics import rfm_segmentation as rfm
 
-st.set_page_config(page_title="Analytics", page_icon="📊", layout="wide")
+auth.guard("admin", "marketing", "sales", "support")
 st.title("📊 แดชบอร์ดวิเคราะห์ข้อมูล")
 st.caption("ผลลัพธ์งาน Data Science ทั้ง 4 — ประมวลผลจากฐานข้อมูลจริงในระบบ")
 

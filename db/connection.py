@@ -62,7 +62,7 @@ def next_id(table: str, col: str, prefix: str, width: int = 4) -> str:
 
 def table_counts() -> pd.DataFrame:
     """สรุปจำนวนเรคคอร์ดทุกตาราง (ใช้บนหน้า Dashboard)"""
-    tables = ["CAMPAIGN", "PRODUCT", "LEAD", "LEAD_ACTIVITY", "SALE",
+    tables = ["EMPLOYEE", "CAMPAIGN", "PRODUCT", "LEAD", "LEAD_ACTIVITY", "SALE",
               "SALE_DETAIL", "CUSTOMER", "TICKET", "TICKET_MESSAGE"]
     sql = " UNION ALL ".join(
         [f"SELECT '{t}' AS table_name, COUNT(*) AS n FROM {t}" for t in tables]

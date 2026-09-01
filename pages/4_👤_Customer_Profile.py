@@ -2,10 +2,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import auth
 from analytics.rfm_segmentation import SEGMENT_COLOR, build_rfm
 from db.connection import cached_query, run_query
 
-st.set_page_config(page_title="Customer Profile", page_icon="👤", layout="wide")
+auth.guard("admin", "marketing", "sales", "support")
 st.title("👤 ข้อมูลลูกค้า")
 
 cust = cached_query("""

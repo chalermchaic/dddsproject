@@ -2,10 +2,12 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+import auth
 from db.connection import cached_query, execute, next_id, run_query
 
-st.set_page_config(page_title="Marketing", page_icon="📢", layout="wide")
+emp = auth.guard("admin", "marketing")
 st.title("📢 งานการตลาด")
+st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
 tab1, tab2, tab3 = st.tabs(["📋 แคมเปญทั้งหมด", "➕ สร้างแคมเปญ", "🙋 บันทึกผู้สนใจใหม่"])
 
@@ -67,9 +69,9 @@ with tab2:
                 st.error("วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น")
             else:
                 cid = next_id("CAMPAIGN", "Campaign_ID", "CMP", 3)
-                execute("INSERT INTO CAMPAIGN VALUES (?,?,?,?,?,?,?,?)",
+                execute("INSERT INTO CAMPAIGN VALUES (?,?,?,?,?,?,?,?,?)",
                         (cid, name.strip(), detail, disc, budget,
-                         str(sdate), str(edate), status))
+                         str(sdate), str(edate), status, emp["employee_id"]))
                 st.cache_data.clear()
                 st.success(f"✅ สร้างแคมเปญ {cid} เรียบร้อย")
 
