@@ -20,8 +20,46 @@ def get_model():
     return ls.train("rf")
 
 
-tab1, tab2, tab3 = st.tabs(["🔥 คิวงานจัดลำดับด้วย AI", "🔍 ค้นหา & บันทึกกิจกรรม",
-                            "📈 ภาพรวมการติดตาม"])
+tab0, tab1, tab2, tab3 = st.tabs(["📅 คิวติดตามวันนี้", "🔥 คิวงานจัดลำดับด้วย AI",
+                                  "🔍 ค้นหา & บันทึกกิจกรรม", "📈 ภาพรวมการติดตาม"])
+
+# ---------------- แท็บ 0: To-Do List ประจำวัน (Process 2.1) ----------------
+with tab0:
+    st.caption("**Process 2.1** — ดึงผู้สนใจที่ถึงกำหนดติดตาม (จาก `Next_Action_Date`) "
+               "ให้ทีมขายทำประจำวัน")
+    todo = run_query("""
+        WITH last_act AS (
+          SELECT Lead_ID, MAX(Activity_Date) AS Last_Date,
+                 MAX(Next_Action_Date)       AS Next_Date
+          FROM LEAD_ACTIVITY GROUP BY Lead_ID)
+        SELECT l.Lead_ID, l.Full_Name, l.Telephone, l.Followup_Status,
+               c.Campaign_Name, a.Last_Date, a.Next_Date
+        FROM LEAD l
+        LEFT JOIN CAMPAIGN c   ON c.Campaign_ID = l.Campaign_ID
+        LEFT JOIN last_act a   ON a.Lead_ID     = l.Lead_ID
+        WHERE l.Followup_Status IN ('รอการติดต่อ','อยู่ระหว่างเสนอขาย')
+        ORDER BY a.Next_Date""")
+    today = str(date.today())
+    overdue = todo[todo.Next_Date.notna() & (todo.Next_Date < today)]
+    due = todo[todo.Next_Date == today]
+    never = todo[todo.Last_Date.isna()]
+
+    m = st.columns(3)
+    m[0].metric("🔴 เลยกำหนด", len(overdue))
+    m[1].metric("🟡 ถึงกำหนดวันนี้", len(due))
+    m[2].metric("⚪ ยังไม่เคยติดตาม", len(never))
+
+    ren = {"Lead_ID": "รหัส", "Full_Name": "ชื่อ", "Telephone": "โทร",
+           "Followup_Status": "สถานะ", "Campaign_Name": "แคมเปญ",
+           "Last_Date": "ติดตามล่าสุด", "Next_Date": "นัดถัดไป"}
+    for label, df in [("🔴 เลยกำหนด", overdue), ("🟡 ถึงกำหนดวันนี้", due),
+                      ("⚪ ยังไม่เคยติดตาม", never)]:
+        if not df.empty:
+            st.markdown(f"#### {label} ({len(df)})")
+            st.dataframe(df.rename(columns=ren)[list(ren.values())],
+                         hide_index=True, use_container_width=True)
+    if overdue.empty and due.empty and never.empty:
+        st.success("เคลียร์คิวติดตามวันนี้หมดแล้ว 🎉")
 
 # ---------------- แท็บ 1: Priority Queue ----------------
 with tab1:
@@ -96,6 +134,28 @@ with tab2:
         sel = st.selectbox("เลือกผู้สนใจเพื่อบันทึกกิจกรรม",
                            leads.Lead_ID + " — " + leads.Full_Name)
         lid = sel.split(" — ")[0]
+
+        # ---- Process 1.3: ส่งรายละเอียดสินค้า/โปรโมชันให้ผู้สนใจ ----
+        with st.expander("📧 ส่งรายละเอียดโปรโมชันให้ผู้สนใจรายนี้ (Process 1.3)"):
+            promo = run_query("""SELECT c.Campaign_Name, c.Discount_Rate, c.Promotion_Details
+                                 FROM LEAD l LEFT JOIN CAMPAIGN c ON c.Campaign_ID=l.Campaign_ID
+                                 WHERE l.Lead_ID=?""", (lid,))
+            pr = promo.iloc[0] if not promo.empty else None
+            default_msg = (
+                f"โปรโมชัน {pr.Campaign_Name} · ส่วนลด {pr.Discount_Rate:.0f}% — "
+                f"{pr.Promotion_Details or ''}"
+                if pr is not None and pd.notna(pr.Campaign_Name)
+                else "แนะนำสินค้า/บริการและสิทธิพิเศษประจำเดือน")
+            msg = st.text_area("เนื้อหาที่จะส่ง", value=default_msg, height=70,
+                               key=f"promo_{lid}")
+            if st.button("ส่งข้อมูลโปรโมชัน", key=f"send_promo_{lid}"):
+                aid = next_id("LEAD_ACTIVITY", "Activity_ID", "ACT", 5)
+                execute("INSERT INTO LEAD_ACTIVITY VALUES (?,?,?,?,?,?,?)",
+                        (aid, lid, "ส่งโปรโมชัน",
+                         f"{date.today()} 09:00:00", emp["employee_id"], msg,
+                         str(date.today() + timedelta(days=3))))
+                st.cache_data.clear()
+                st.success("ส่งรายละเอียดโปรโมชันให้ผู้สนใจแล้ว (บันทึกเป็นกิจกรรม)")
 
         left, right = st.columns([1, 1])
         with left:
