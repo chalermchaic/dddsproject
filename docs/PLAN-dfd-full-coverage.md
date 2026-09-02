@@ -131,42 +131,77 @@
 | `pages/5_🎫_Support_Ticket.py` | + สรุปผล + ประเมินผลบริการ (4.3) |
 | `pages/6_📊_Analytics_Dashboard.py` | + แท็บ "รายงานสรุปยอดขาย" (5.2) |
 | `pages/9_🌐_Portal.py` | **ใหม่** — external entity inbound/outbound |
-| `README.md` `bootstrap.py` `data-dictionary-er.md` `VERSION` `.gitignore` | เอกสาร + verify + v1.2.0 |
+| `tests/` | **ใหม่** — pytest (AppTest) + Playwright e2e + capture หลักฐาน |
+| `requirements-dev.txt` | **ใหม่** — `pytest`, `pytest-playwright`, `playwright` |
+| `.github/workflows/ci.yml` | **ใหม่** (optional) — seed + bootstrap --check + pytest |
+| `README.md` `bootstrap.py` `data-dictionary-er.md` `VERSION` `.gitignore` `Makefile` | เอกสาร + verify + v1.2.0 + target `test` / `e2e` / `evidence` |
 
 **ไม่แตะ:** `analytics/*.py` (logic ML/สูตร 4 งานเดิม), Views ทั้ง 4, `app.py` router, `docker/*`
 
 ---
 
-## การทดสอบ (checklist — 1 ข้อ = 1 กิจกรรม DFD)
+## การทดสอบ — 3 ชั้น
 
 ```bash
 .venv\Scripts\activate
+pip install -r requirements.txt -r requirements-dev.txt
+python -m playwright install chromium
 python db/seed_data.py            # EMPLOYEE + ทุกสถานะใหม่, foreign_key_check ผ่าน
 python bootstrap.py --check       # exit 0
-python -m analytics.lead_scoring && ... (4 โมดูล — ต้องได้ผลเหมือนเดิม)
-streamlit run app.py
+make test        # ชั้น 1 + 2  (เร็ว, ไม่ใช้ browser)
+make e2e         # ชั้น 3       (Playwright)
+make evidence    # ชั้น 3 + ประกอบ docs/evidence/README.md
 ```
 
-เดินทีละกิจกรรมในเบราว์เซอร์ (ควร ✅ ครบ 14):
+### ชั้น 1 — Smoke / logic  (`tests/test_smoke.py`, Streamlit `AppTest`, ~10s)
+- ต่อยอดสคริปต์ matrix เดิม → committed pytest:
+  - ทุกหน้า × ทุก role ที่มีสิทธิ์ → ไม่มี exception
+  - role ไม่มีสิทธิ์ → เจอ `st.error` + `st.stop` (ไม่ crash)
+  - role `guest` → เห็นเฉพาะ `pages/9`; role อื่นไม่เห็น `pages/9`
+- `analytics` 4 โมดูล import + รัน `train()`/`build_*()` ได้ (metrics ไม่ต่ำผิดปกติ)
 
-| กิจกรรม | ขั้นตอนทดสอบ | ผลที่ต้องเห็น |
+### ชั้น 2 — DFD flow (headless)  (`tests/test_dfd_flows.py`, `AppTest` ขับฟอร์ม, ~1–2 นาที)
+1 test = 1 กิจกรรม DFD — เซ็ต `session_state["user"]`, กรอกฟอร์ม, กดปุ่ม, แล้ว **assert แถว/สถานะใน `db/crm.db`**
+(fixture: re-seed ก่อนทุก test; รัน serial). ครอบคลุมทั้ง 14 กิจกรรม:
+
+| กิจกรรม | ขับหน้า | assert |
 |---|---|---|
-| 1.1 | marketing1 → สร้างแคมเปญ | แถว `CAMPAIGN` + `Employee_ID` |
-| 1.2 | marketing1 → บันทึกผู้สนใจ **และ** Portal → ลงทะเบียนเอง | `LEAD` 2 แถวจาก 2 ช่องทาง |
-| 1.3 | sale1 → เลือก lead → "ส่งรายละเอียดโปรโมชัน" | `LEAD_ACTIVITY` type `ส่งโปรโมชัน` |
-| 2.1 | sale1 → แท็บ "คิวติดตามวันนี้" | เห็นกลุ่ม เลยกำหนด/วันนี้ |
-| 2.2 | sale1 → บันทึกกิจกรรม | `LEAD_ACTIVITY` + สถานะ lead อัปเดต |
-| 2.3 | sale1 → ออกใบเสนอราคา | `SALE` `ออกใบเสนอราคาแล้ว` |
-| 3.1 | Portal (ผู้สนใจ) → ยืนยันคำสั่งซื้อ → sale1 แท็บ "รับ&ตรวจคำสั่งซื้อ" | `Sale_Status='รอการตรวจสอบชำระเงิน'` |
-| 3.2 | Portal → อัปโหลดสลิป → sale1 แท็บ "ตรวจสอบการชำระเงิน" เห็นสลิป | `Payment_Slip` ไม่ว่าง |
-| 3.3 | sale1 แท็บ "ออกใบเสร็จ" | `ปิดการขายสำเร็จ` + `CUSTOMER` ใหม่ + ดาวน์โหลดใบเสร็จได้ |
-| 4.1 | Portal (ลูกค้า) → แจ้งปัญหา | `TICKET` `Employee_ID=NULL` |
-| 4.2 | cs1 → คิวเคส → ตอบแชท + เปลี่ยนสถานะ | `TICKET_MESSAGE` + สถานะ |
-| 4.3 | cs1 ปิดเคส + สรุปผล → Portal ให้คะแนน 5 | `Service_Rating=5`; `pages/4` เห็นประวัติรวม |
-| 5.1 | marketing1 → Analytics แท็บ 4 | ตาราง ROI |
-| 5.2 | sale1 → Analytics แท็บ "รายงานสรุปยอดขาย" → ดาวน์โหลด CSV | ไฟล์ CSV ยอดขายรายพนักงาน |
+| 1.1 | `pages/1` marketing1 → สร้างแคมเปญ | `CAMPAIGN.Employee_ID` = ผู้ล็อกอิน |
+| 1.2 | `pages/1` + `pages/9` (guest) ลงทะเบียนเอง | `LEAD` เพิ่ม 2 แถว |
+| 1.3 | `pages/2` sale1 → "ส่งรายละเอียดโปรโมชัน" | `LEAD_ACTIVITY.Activity_Type='ส่งโปรโมชัน'` |
+| 2.1 | `pages/2` แท็บ "คิวติดตามวันนี้" | ตารางมีแถวกลุ่ม เลยกำหนด/วันนี้ |
+| 2.2 | `pages/2` บันทึกกิจกรรม | `LEAD_ACTIVITY` + `LEAD.Followup_Status` เปลี่ยน |
+| 2.3 | `pages/3` ออกใบเสนอราคา | `SALE.Sale_Status='ออกใบเสนอราคาแล้ว'` |
+| 3.1 | `pages/9` ยืนยันคำสั่งซื้อ → `pages/3` แท็บ 3.1 | `Sale_Status='รอการตรวจสอบชำระเงิน'`, `Order_Confirmed_At` ไม่ว่าง |
+| 3.2 | `pages/9` `set_input_files` สลิป → `pages/3` แท็บ 3.2 | `Payment_Slip` ไม่ว่าง + ไฟล์อยู่ใน `uploads/` |
+| 3.3 | `pages/3` แท็บ 3.3 | `ปิดการขายสำเร็จ` + `CUSTOMER` ใหม่ + ได้ bytes ใบเสร็จ |
+| 4.1 | `pages/9` (ลูกค้า) แจ้งปัญหา | `TICKET` ใหม่ `Employee_ID IS NULL` |
+| 4.2 | `pages/5` cs1 ตอบแชท + เปลี่ยนสถานะ | `TICKET_MESSAGE` + `Ticket_Status` |
+| 4.3 | `pages/5` ปิดเคส + `pages/9` ให้คะแนน 5 | `TICKET.Service_Rating=5`; `pages/4` การ์ดประวัติมีข้อมูล |
+| 5.1 | `pages/6` แท็บ 4 | ตาราง ROI ไม่ว่าง |
+| 5.2 | `pages/6` แท็บ "รายงานสรุปยอดขาย" | `download_button` คืน CSV ที่มีคอลัมน์ พนักงานขาย |
 
-AppTest: อัปเดต matrix เดิม + เพิ่ม role `guest` → `pages/9` ไม่มี exception; ทุก role อื่นไม่เห็น `pages/9`
+### ชั้น 3 — Playwright e2e + capture หลักฐาน  (`tests/e2e/`, ~3–5 นาที)
+- `tests/e2e/conftest.py`:
+  - fixture (session): re-seed DB → `subprocess.Popen(["streamlit","run","app.py","--server.port","8765","--server.headless","true"])` → poll `GET /_stcore/health` จน 200 → yield `base_url` → kill
+  - fixture (function): `page` จาก `pytest-playwright`, `page.set_default_timeout(15000)` (Streamlit rerun ช้า)
+- `tests/e2e/test_dfd_evidence.py` — 1 test/กิจกรรม เดินผ่าน UI จริง:
+  - login: click ปุ่มที่มีข้อความ "เข้าใช้งานเป็น ... sale1" (ปรับ label ปุ่มใน `auth.py` ให้ไม่มี backtick ครอบ username เพื่อให้ selector ง่าย)
+  - เมนู: `page.get_by_role("link", name="ใบเสนอราคา/ชำระเงิน").click()`
+  - widget: `get_by_role("button"/"textbox"/"tab")`, `get_by_test_id("stFileUploaderDropzoneInput").set_input_files(...)`
+  - หลังทุก action: `expect(page.get_by_text("...")).to_be_visible()` แล้ว
+    `page.screenshot(path=f"docs/evidence/{activity}.png", full_page=True)`
+- `tests/e2e/build_report.py` (รันโดย `make evidence`): สแกน `docs/evidence/*.png` → เขียน
+  `docs/evidence/README.md` ตาราง 14 กิจกรรม + `![](x.png)` — เอาไปแปะภาคผนวกรายงานได้เลย
+- `.gitignore`: `docs/evidence/*.png` (เก็บเฉพาะตอนส่งงาน / หรือ commit เป็นหลักฐานก็ได้)
+
+**หมายเหตุความเสี่ยง:** Playwright + Streamlit เปราะพอควร (ไม่มี stable id, rerun async) →
+ชั้น 1–2 เป็น **gate จริง** (ต้องเขียว), ชั้น 3 เป็น **best-effort visual evidence**
+ถ้า e2e บาง step ไม่นิ่ง ให้ fallback เป็น screenshot ของหน้า + assert DB (เหมือนชั้น 2) แทน
+
+### CI (optional) — `.github/workflows/ci.yml`
+`python db/seed_data.py` → `python bootstrap.py --check` → `pytest tests/test_smoke.py tests/test_dfd_flows.py` → `python -m analytics.*`
+(ชั้น 3 ข้ามใน CI หรือรันแยก job ที่ลง `playwright install --with-deps chromium`)
 
 ---
 
@@ -178,4 +213,6 @@ AppTest: อัปเดต matrix เดิม + เพิ่ม role `guest` �
 5. `Add service rating + combined order/service history (4.3)`
 6. `Add sales summary report tab (5.2)`
 7. `Add simulated Lead/Customer portal (guest role)`
-8. `Docs + bootstrap + version 1.2.0`
+8. `Add pytest smoke + DFD-flow test suites`
+9. `Add Playwright e2e evidence capture + report builder`
+10. `Docs + CI + bootstrap + version 1.2.0`
