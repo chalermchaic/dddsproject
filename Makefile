@@ -1,7 +1,11 @@
-.PHONY: install seed run docker check test zip clean
+.PHONY: install install-dev seed run docker check test e2e evidence analytics zip clean
 
 install:
 	pip install -r requirements.txt
+
+install-dev:
+	pip install -r requirements.txt -r requirements-dev.txt
+	python -m playwright install chromium
 
 seed:
 	python db/seed_data.py
@@ -15,14 +19,25 @@ docker:
 check:
 	python bootstrap.py --check
 
-test:
+analytics:
 	python -m analytics.lead_scoring
 	python -m analytics.rfm_segmentation
 	python -m analytics.churn_health
 	python -m analytics.campaign_roi
 
+test:               ## ชั้น 1 + 2 (เร็ว, ไม่ใช้ browser)
+	python db/seed_data.py
+	pytest -q
+
+e2e:                ## ชั้น 3 — Playwright
+	pytest tests/e2e -q --browser chromium
+
+evidence: e2e       ## ชั้น 3 + ประกอบ docs/evidence/README.md
+	python tests/e2e/build_report.py
+
 zip:
 	python bootstrap.py
 
 clean:
-	rm -rf __pycache__ */__pycache__ db/crm.db db/crm.db-wal db/crm.db-shm
+	rm -rf __pycache__ */__pycache__ .pytest_cache uploads \
+	       db/crm.db db/crm.db-wal db/crm.db-shm

@@ -64,4 +64,6 @@ response*.md
 
 # Uploaded files (payment slips ฯลฯ) + generated test evidence
 uploads/
-docs/evidence/*.png
+docs/evidence/
+.pytest_cache/
+test-results/
