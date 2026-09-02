@@ -1,0 +1,5 @@
+# เครื่องมือทดสอบ (ไม่จำเป็นต่อการรันแอป)
+pytest==8.3.3
+pytest-timeout==2.3.1
+pytest-playwright==0.5.2
+playwright==1.47.0
