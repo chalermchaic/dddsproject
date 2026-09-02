@@ -13,6 +13,19 @@ DROP TABLE IF EXISTS LEAD_ACTIVITY;
 DROP TABLE IF EXISTS LEAD;
 DROP TABLE IF EXISTS PRODUCT;
 DROP TABLE IF EXISTS CAMPAIGN;
+DROP TABLE IF EXISTS EMPLOYEE;
+
+-- ---------- Master Data: EMPLOYEE ----------
+-- Username/Role เป็น field ชั้น application (auth) — ส่วนที่เหลือตรงกับ data-dictionary-er.md
+CREATE TABLE EMPLOYEE (
+    Employee_ID   TEXT(10)  PRIMARY KEY,
+    Employee_Name TEXT(100) NOT NULL,
+    Position      TEXT(50)  NOT NULL,
+    Department    TEXT(50)  NOT NULL,
+    Username      TEXT(50)  UNIQUE NOT NULL,
+    Role          TEXT(20)  NOT NULL
+                            CHECK (Role IN ('admin','marketing','sales','support'))
+);
 
 -- ---------- D5: CAMPAIGN ----------
 CREATE TABLE CAMPAIGN (
@@ -26,7 +39,10 @@ CREATE TABLE CAMPAIGN (
     End_Date          TEXT      NOT NULL,
     Campaign_Status   TEXT(20)  NOT NULL DEFAULT 'เปิดใช้งานอยู่'
                                 CHECK (Campaign_Status IN ('เปิดใช้งานอยู่','หมดอายุ')),
-    CHECK (End_Date >= Start_Date)
+    Employee_ID       TEXT(10)  NOT NULL,          -- พนักงานการตลาดผู้สร้างแคมเปญ
+    CHECK (End_Date >= Start_Date),
+    FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- ---------- D2: PRODUCT ----------
@@ -59,29 +75,38 @@ CREATE TABLE LEAD_ACTIVITY (
     Activity_ID      TEXT(10)  PRIMARY KEY,
     Lead_ID          TEXT(10)  NOT NULL,
     Activity_Type    TEXT(50)  NOT NULL
-                               CHECK (Activity_Type IN ('โทรศัพท์','อีเมล','ส่งไลน์','นัดพบ')),
+                               CHECK (Activity_Type IN
+                                     ('โทรศัพท์','อีเมล','ส่งไลน์','นัดพบ','ส่งโปรโมชัน')),
     Activity_Date    TEXT      NOT NULL,
-    Sales_Staff      TEXT(100),
+    Employee_ID      TEXT(10)  NOT NULL,          -- พนักงานขายผู้รับผิดชอบการติดต่อรอบนี้
     Notes            TEXT,
     Next_Action_Date TEXT,
     FOREIGN KEY (Lead_ID) REFERENCES LEAD(Lead_ID)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID)
+        ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 -- ---------- D2: SALE ----------
 CREATE TABLE SALE (
     Sale_ID        TEXT(10) PRIMARY KEY,
     Lead_ID        TEXT(10) NOT NULL,
+    Employee_ID    TEXT(10) NOT NULL,          -- พนักงานขายผู้รับผิดชอบ/ปิดการขาย
     Quotation_No   TEXT(20) UNIQUE NOT NULL,
     Quotation_Date TEXT     NOT NULL,
     Total_Amount   REAL     NOT NULL DEFAULT 0 CHECK (Total_Amount >= 0),
     Sale_Status    TEXT(20) NOT NULL DEFAULT 'ออกใบเสนอราคาแล้ว'
                             CHECK (Sale_Status IN
-                                  ('ออกใบเสนอราคาแล้ว','รอการตรวจสอบชำระเงิน','ปิดการขายสำเร็จ')),
+                                  ('ออกใบเสนอราคาแล้ว','รอตรวจสอบคำสั่งซื้อ',
+                                   'รอการตรวจสอบชำระเงิน','ปิดการขายสำเร็จ')),
+    Order_Confirmed_At TEXT,                      -- 3.1: ผู้สนใจยืนยันคำสั่งซื้อ
+    Payment_Slip   TEXT,                          -- 3.2: ชื่อไฟล์สลิปที่อัปโหลด (uploads/)
     Invoice_No     TEXT(20) UNIQUE,
     Payment_Ref    TEXT(100),
     Confirmed_At   TEXT,
     FOREIGN KEY (Lead_ID) REFERENCES LEAD(Lead_ID)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID)
         ON UPDATE CASCADE ON DELETE RESTRICT,
     -- กฎธุรกิจ: ปิดการขายสำเร็จต้องมีวันยืนยัน
     CHECK (Sale_Status <> 'ปิดการขายสำเร็จ' OR Confirmed_At IS NOT NULL)
@@ -123,11 +148,15 @@ CREATE TABLE TICKET (
     Problem_Title    TEXT(150) NOT NULL,
     Ticket_Status    TEXT(20)  NOT NULL DEFAULT 'รอดำเนินการ'
                                CHECK (Ticket_Status IN ('รอดำเนินการ','กำลังแก้ไข','ปิดเคสสำเร็จ')),
-    Assigned_Staff   TEXT(100),
+    Employee_ID      TEXT(10),                  -- พนักงาน/ช่างที่รับผิดชอบเคส (NULL = ยังไม่มอบหมาย)
     Created_At       TEXT      NOT NULL DEFAULT (datetime('now','localtime')),
     Closed_At        TEXT,
+    Service_Rating   INTEGER   CHECK (Service_Rating BETWEEN 1 AND 5),  -- 4.3: ลูกค้าประเมินผลบริการ
+    Service_Feedback TEXT,
     FOREIGN KEY (Customer_ID) REFERENCES CUSTOMER(Customer_ID) ON DELETE CASCADE,
     FOREIGN KEY (Product_ID)  REFERENCES PRODUCT(Product_ID)   ON DELETE SET NULL,
+    FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID)
+        ON UPDATE CASCADE ON DELETE SET NULL,
     CHECK (Ticket_Status <> 'ปิดเคสสำเร็จ' OR Closed_At IS NOT NULL)
 );
 
@@ -149,10 +178,14 @@ CREATE INDEX idx_lead_campaign   ON LEAD(Campaign_ID);
 CREATE INDEX idx_lead_status     ON LEAD(Followup_Status);
 CREATE INDEX idx_lead_source     ON LEAD(Source_Channel);
 CREATE INDEX idx_act_lead        ON LEAD_ACTIVITY(Lead_ID, Activity_Date);
+CREATE INDEX idx_act_emp         ON LEAD_ACTIVITY(Employee_ID);
 CREATE INDEX idx_sale_lead       ON SALE(Lead_ID);
+CREATE INDEX idx_sale_emp        ON SALE(Employee_ID);
 CREATE INDEX idx_sale_confirmed  ON SALE(Confirmed_At);
 CREATE INDEX idx_cust_lead       ON CUSTOMER(Lead_ID);
 CREATE INDEX idx_ticket_cust     ON TICKET(Customer_ID, Created_At);
+CREATE INDEX idx_ticket_emp      ON TICKET(Employee_ID);
+CREATE INDEX idx_lead_campaign_emp ON CAMPAIGN(Employee_ID);
 CREATE INDEX idx_msg_ticket      ON TICKET_MESSAGE(Ticket_ID);
 
 -- ============================================================

@@ -58,3 +58,12 @@ Thumbs.db
 
 # Planning / scratch notes
 response*.md
+
+# Binary design exports (keep the .md/.txt text versions in git instead)
+*.pdf
+
+# Uploaded files (payment slips ฯลฯ) + generated test evidence
+uploads/
+docs/evidence/
+.pytest_cache/
+test-results/

@@ -2,10 +2,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import auth
 from analytics.rfm_segmentation import SEGMENT_COLOR, build_rfm
 from db.connection import cached_query, run_query
 
-st.set_page_config(page_title="Customer Profile", page_icon="👤", layout="wide")
+auth.guard("admin", "marketing", "sales", "support")
 st.title("👤 ข้อมูลลูกค้า")
 
 cust = cached_query("""
@@ -86,9 +87,33 @@ with tab1:
         st.dataframe(run_query("""
             SELECT Ticket_ID AS รหัส, Problem_Category AS ประเภท,
                    Problem_Title AS หัวข้อ, Ticket_Status AS สถานะ,
-                   Created_At AS แจ้งเมื่อ
+                   Service_Rating AS คะแนน, Created_At AS แจ้งเมื่อ
             FROM TICKET WHERE Customer_ID=? ORDER BY Created_At DESC""", (cid,)),
             use_container_width=True, hide_index=True)
+
+    st.divider()
+    st.markdown("#### 📋 ประวัติการสั่งซื้อและรับบริการ (Process 4.3)")
+    combined = run_query("""
+        SELECT 'สั่งซื้อ' AS ประเภท, s.Confirmed_At AS วันที่,
+               s.Invoice_No AS อ้างอิง, s.Total_Amount AS ยอดเงิน, NULL AS คะแนน
+        FROM SALE s JOIN CUSTOMER cu ON cu.Lead_ID=s.Lead_ID
+        WHERE cu.Customer_ID=? AND s.Sale_Status='ปิดการขายสำเร็จ'
+        UNION ALL
+        SELECT 'รับบริการ', COALESCE(t.Closed_At, t.Created_At),
+               t.Ticket_ID, NULL, t.Service_Rating
+        FROM TICKET t WHERE t.Customer_ID=?
+        ORDER BY วันที่ DESC""", (cid, cid))
+    r1, r2, r3 = st.columns(3)
+    r1.metric("จำนวนบิล", int((combined["ประเภท"] == "สั่งซื้อ").sum()))
+    r2.metric("จำนวนเคสบริการ", int((combined["ประเภท"] == "รับบริการ").sum()))
+    r3.metric("คะแนนบริการเฉลี่ย",
+              f"{combined['คะแนน'].dropna().mean():.1f}/5"
+              if combined["คะแนน"].notna().any() else "—")
+    st.dataframe(combined, use_container_width=True, hide_index=True,
+                 column_config={"ยอดเงิน": st.column_config.NumberColumn(format="฿%.2f")})
+    st.download_button("⬇️ ดาวน์โหลดประวัติ (CSV)",
+                       combined.to_csv(index=False).encode("utf-8-sig"),
+                       file_name=f"history_{cid}.csv", mime="text/csv")
 
 with tab2:
     kw = st.text_input("🔍 ค้นหาชื่อบริษัท / ผู้ติดต่อ")

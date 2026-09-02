@@ -4,14 +4,15 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+import auth
 from analytics import lead_scoring as ls
 from db.connection import cached_query, execute, next_id, run_query
 
-st.set_page_config(page_title="Sales Followup", page_icon="📞", layout="wide")
+emp = auth.guard("admin", "sales")
 st.title("📞 ติดตามผู้สนใจ")
+st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
 STATUSES = ["รอการติดต่อ", "อยู่ระหว่างเสนอขาย", "ปิดการขายสำเร็จ", "ไม่สนใจ"]
-STAFF = ["ณัฐวุฒิ ขายเก่ง", "ปิยะดา ปิดดีล", "ธีรภัทร ตามงาน", "อรพรรณ ดูแลลูกค้า"]
 
 
 @st.cache_resource(show_spinner="กำลังเทรนโมเดลจัดลำดับความสำคัญ...")
@@ -19,8 +20,46 @@ def get_model():
     return ls.train("rf")
 
 
-tab1, tab2, tab3 = st.tabs(["🔥 คิวงานจัดลำดับด้วย AI", "🔍 ค้นหา & บันทึกกิจกรรม",
-                            "📈 ภาพรวมการติดตาม"])
+tab0, tab1, tab2, tab3 = st.tabs(["📅 คิวติดตามวันนี้", "🔥 คิวงานจัดลำดับด้วย AI",
+                                  "🔍 ค้นหา & บันทึกกิจกรรม", "📈 ภาพรวมการติดตาม"])
+
+# ---------------- แท็บ 0: To-Do List ประจำวัน (Process 2.1) ----------------
+with tab0:
+    st.caption("**Process 2.1** — ดึงผู้สนใจที่ถึงกำหนดติดตาม (จาก `Next_Action_Date`) "
+               "ให้ทีมขายทำประจำวัน")
+    todo = run_query("""
+        WITH last_act AS (
+          SELECT Lead_ID, MAX(Activity_Date) AS Last_Date,
+                 MAX(Next_Action_Date)       AS Next_Date
+          FROM LEAD_ACTIVITY GROUP BY Lead_ID)
+        SELECT l.Lead_ID, l.Full_Name, l.Telephone, l.Followup_Status,
+               c.Campaign_Name, a.Last_Date, a.Next_Date
+        FROM LEAD l
+        LEFT JOIN CAMPAIGN c   ON c.Campaign_ID = l.Campaign_ID
+        LEFT JOIN last_act a   ON a.Lead_ID     = l.Lead_ID
+        WHERE l.Followup_Status IN ('รอการติดต่อ','อยู่ระหว่างเสนอขาย')
+        ORDER BY a.Next_Date""")
+    today = str(date.today())
+    overdue = todo[todo.Next_Date.notna() & (todo.Next_Date < today)]
+    due = todo[todo.Next_Date == today]
+    never = todo[todo.Last_Date.isna()]
+
+    m = st.columns(3)
+    m[0].metric("🔴 เลยกำหนด", len(overdue))
+    m[1].metric("🟡 ถึงกำหนดวันนี้", len(due))
+    m[2].metric("⚪ ยังไม่เคยติดตาม", len(never))
+
+    ren = {"Lead_ID": "รหัส", "Full_Name": "ชื่อ", "Telephone": "โทร",
+           "Followup_Status": "สถานะ", "Campaign_Name": "แคมเปญ",
+           "Last_Date": "ติดตามล่าสุด", "Next_Date": "นัดถัดไป"}
+    for label, df in [("🔴 เลยกำหนด", overdue), ("🟡 ถึงกำหนดวันนี้", due),
+                      ("⚪ ยังไม่เคยติดตาม", never)]:
+        if not df.empty:
+            st.markdown(f"#### {label} ({len(df)})")
+            st.dataframe(df.rename(columns=ren)[list(ren.values())],
+                         hide_index=True, use_container_width=True)
+    if overdue.empty and due.empty and never.empty:
+        st.success("เคลียร์คิวติดตามวันนี้หมดแล้ว 🎉")
 
 # ---------------- แท็บ 1: Priority Queue ----------------
 with tab1:
@@ -96,13 +135,34 @@ with tab2:
                            leads.Lead_ID + " — " + leads.Full_Name)
         lid = sel.split(" — ")[0]
 
+        # ---- Process 1.3: ส่งรายละเอียดสินค้า/โปรโมชันให้ผู้สนใจ ----
+        with st.expander("📧 ส่งรายละเอียดโปรโมชันให้ผู้สนใจรายนี้ (Process 1.3)"):
+            promo = run_query("""SELECT c.Campaign_Name, c.Discount_Rate, c.Promotion_Details
+                                 FROM LEAD l LEFT JOIN CAMPAIGN c ON c.Campaign_ID=l.Campaign_ID
+                                 WHERE l.Lead_ID=?""", (lid,))
+            pr = promo.iloc[0] if not promo.empty else None
+            default_msg = (
+                f"โปรโมชัน {pr.Campaign_Name} · ส่วนลด {pr.Discount_Rate:.0f}% — "
+                f"{pr.Promotion_Details or ''}"
+                if pr is not None and pd.notna(pr.Campaign_Name)
+                else "แนะนำสินค้า/บริการและสิทธิพิเศษประจำเดือน")
+            msg = st.text_area("เนื้อหาที่จะส่ง", value=default_msg, height=70,
+                               key=f"promo_{lid}")
+            if st.button("ส่งข้อมูลโปรโมชัน", key=f"send_promo_{lid}"):
+                aid = next_id("LEAD_ACTIVITY", "Activity_ID", "ACT", 5)
+                execute("INSERT INTO LEAD_ACTIVITY VALUES (?,?,?,?,?,?,?)",
+                        (aid, lid, "ส่งโปรโมชัน",
+                         f"{date.today()} 09:00:00", emp["employee_id"], msg,
+                         str(date.today() + timedelta(days=3))))
+                st.cache_data.clear()
+                st.success("ส่งรายละเอียดโปรโมชันให้ผู้สนใจแล้ว (บันทึกเป็นกิจกรรม)")
+
         left, right = st.columns([1, 1])
         with left:
             st.markdown("#### ➕ บันทึกกิจกรรมใหม่")
             with st.form("act", clear_on_submit=True):
-                a1, a2 = st.columns(2)
-                atype = a1.selectbox("ประเภท", ["โทรศัพท์", "อีเมล", "ส่งไลน์", "นัดพบ"])
-                staff = a2.selectbox("พนักงานขาย", STAFF)
+                atype = st.selectbox("ประเภท", ["โทรศัพท์", "อีเมล", "ส่งไลน์", "นัดพบ"])
+                st.caption(f"บันทึกโดย: {emp['name']} ({emp['username']})")
                 adate = st.date_input("วันที่ติดต่อ", value=date.today())
                 notes = st.text_area("บันทึกผลการติดต่อ", height=80)
                 nxt = st.date_input("นัดติดตามครั้งถัดไป",
@@ -114,7 +174,7 @@ with tab2:
                     aid = next_id("LEAD_ACTIVITY", "Activity_ID", "ACT", 5)
                     execute("INSERT INTO LEAD_ACTIVITY VALUES (?,?,?,?,?,?,?)",
                             (aid, lid, atype, f"{adate} 10:00:00",
-                             staff, notes, str(nxt)))
+                             emp["employee_id"], notes, str(nxt)))
                     execute("UPDATE LEAD SET Followup_Status=? WHERE Lead_ID=?",
                             (new_st, lid))
                     st.cache_data.clear()
@@ -122,9 +182,12 @@ with tab2:
 
         with right:
             st.markdown("#### 🕓 ไทม์ไลน์การติดตาม")
-            hist = run_query("""SELECT Activity_Date, Activity_Type, Sales_Staff, Notes
-                                FROM LEAD_ACTIVITY WHERE Lead_ID=?
-                                ORDER BY Activity_Date DESC""", (lid,))
+            hist = run_query("""SELECT a.Activity_Date, a.Activity_Type,
+                                       e.Employee_Name AS Sales_Staff, a.Notes
+                                FROM LEAD_ACTIVITY a
+                                JOIN EMPLOYEE e ON e.Employee_ID = a.Employee_ID
+                                WHERE a.Lead_ID=?
+                                ORDER BY a.Activity_Date DESC""", (lid,))
             if hist.empty:
                 st.info("ยังไม่มีประวัติการติดตาม")
             else:
@@ -147,12 +210,14 @@ with tab3:
     with c2:
         st.subheader("ผลงานรายพนักงาน")
         d = cached_query("""
-            SELECT a.Sales_Staff AS พนักงาน,
+            SELECT e.Employee_Name AS พนักงาน,
                    COUNT(*) AS กิจกรรม,
                    COUNT(DISTINCT a.Lead_ID) AS ผู้สนใจที่ดูแล,
                    SUM(CASE WHEN l.Followup_Status='ปิดการขายสำเร็จ' THEN 1 ELSE 0 END) AS ปิดได้
-            FROM LEAD_ACTIVITY a JOIN LEAD l ON l.Lead_ID=a.Lead_ID
-            GROUP BY a.Sales_Staff ORDER BY ปิดได้ DESC""")
+            FROM LEAD_ACTIVITY a
+            JOIN LEAD l     ON l.Lead_ID = a.Lead_ID
+            JOIN EMPLOYEE e ON e.Employee_ID = a.Employee_ID
+            GROUP BY e.Employee_ID ORDER BY ปิดได้ DESC""")
         st.dataframe(d, use_container_width=True, hide_index=True)
 
     st.subheader("ความสัมพันธ์: จำนวนครั้งที่ติดตาม กับ อัตราปิดการขาย")

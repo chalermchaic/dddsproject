@@ -3,18 +3,21 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+import auth
 from analytics import campaign_roi as roi
 from analytics import churn_health as ch
 from analytics import lead_scoring as ls
 from analytics import rfm_segmentation as rfm
+from db.connection import cached_query
 
-st.set_page_config(page_title="Analytics", page_icon="📊", layout="wide")
+auth.guard("admin", "marketing", "sales", "support")
 st.title("📊 แดชบอร์ดวิเคราะห์ข้อมูล")
-st.caption("ผลลัพธ์งาน Data Science ทั้ง 4 — ประมวลผลจากฐานข้อมูลจริงในระบบ")
+st.caption("ผลลัพธ์งาน Data Science 4 งาน + รายงาน (Process 5.0)")
 
-t1, t2, t3, t4 = st.tabs([
+t1, t2, t3, t4, t5 = st.tabs([
     "1️⃣ Lead Scoring", "2️⃣ RFM Segmentation",
-    "3️⃣ Customer Health & Churn", "4️⃣ Campaign ROI"])
+    "3️⃣ Customer Health & Churn", "4️⃣ Campaign ROI (5.1)",
+    "5️⃣ รายงานสรุปยอดขาย (5.2)"])
 
 
 # ================= งานที่ 1 =================
@@ -237,3 +240,43 @@ with t4:
 
         st.markdown("#### 🏆 สินค้าทำรายได้สูงสุด")
         st.dataframe(roi.top_products(10), use_container_width=True, hide_index=True)
+
+# ================= งานที่ 5.2 — รายงานสรุปยอดขาย =================
+with t5:
+    st.subheader("รายงานสรุปยอดขาย → ฝ่ายขาย")
+    period = st.radio("ช่วงเวลา", ["ทั้งหมด", "12 เดือนล่าสุด", "ปีนี้"], horizontal=True)
+    where = "s.Sale_Status='ปิดการขายสำเร็จ' AND s.Confirmed_At IS NOT NULL"
+    if period == "12 เดือนล่าสุด":
+        where += " AND s.Confirmed_At >= date('now','-12 months')"
+    elif period == "ปีนี้":
+        where += " AND strftime('%Y', s.Confirmed_At) = strftime('%Y','now')"
+
+    kpi = cached_query(f"""SELECT COUNT(*) bills, COALESCE(SUM(s.Total_Amount),0) rev,
+                                  COALESCE(AVG(s.Total_Amount),0) avg
+                           FROM SALE s WHERE {where}""").iloc[0]
+    m = st.columns(3)
+    m[0].metric("จำนวนบิล", f"{int(kpi.bills):,}")
+    m[1].metric("ยอดขายรวม", f"฿{kpi.rev:,.0f}")
+    m[2].metric("ยอดเฉลี่ย/บิล", f"฿{kpi.avg:,.0f}")
+
+    by_emp = cached_query(f"""SELECT e.Employee_Name AS พนักงานขาย,
+                                     COUNT(*) AS บิล, SUM(s.Total_Amount) AS ยอดขาย
+                              FROM SALE s JOIN EMPLOYEE e ON e.Employee_ID=s.Employee_ID
+                              WHERE {where}
+                              GROUP BY e.Employee_ID ORDER BY ยอดขาย DESC""")
+    a, b = st.columns([3, 2])
+    a.plotly_chart(px.bar(by_emp, x="ยอดขาย", y="พนักงานขาย", orientation="h",
+                          color="ยอดขาย", color_continuous_scale="Greens",
+                          title="ยอดขายรายพนักงาน"), use_container_width=True)
+    by_month = cached_query(f"""SELECT strftime('%Y-%m', s.Confirmed_At) AS เดือน,
+                                       SUM(s.Total_Amount) AS ยอดขาย
+                                FROM SALE s WHERE {where}
+                                GROUP BY เดือน ORDER BY เดือน""")
+    b.plotly_chart(px.area(by_month, x="เดือน", y="ยอดขาย"), use_container_width=True)
+
+    st.markdown("#### ตารางสรุปรายพนักงาน")
+    st.dataframe(by_emp, use_container_width=True, hide_index=True,
+                 column_config={"ยอดขาย": st.column_config.NumberColumn(format="฿%.0f")})
+    st.download_button("⬇️ ดาวน์โหลดรายงาน (CSV)",
+                       by_emp.to_csv(index=False).encode("utf-8-sig"),
+                       file_name="sales_summary.csv", mime="text/csv")
