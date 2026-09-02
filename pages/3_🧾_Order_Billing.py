@@ -184,10 +184,9 @@ with tab4:
                     st.cache_data.clear()
                     st.success(f"✅ ปิดการขาย {r.Sale_ID} เรียบร้อย")
             rows = "".join(
-                f"<tr><td>{x.สินค้า}</td><td align=right>{x.จำนวน}</td>"
-                f"<td align=right>{x.ราคาต่อหน่วย:,.2f}</td>"
-                f"<td align=right>{x.รวม:,.2f}</td></tr>"
-                for x in items.itertuples())
+                f"<tr><td>{pn}</td><td align=right>{qy}</td>"
+                f"<td align=right>{up:,.2f}</td><td align=right>{sb:,.2f}</td></tr>"
+                for pn, qy, up, sb in items.itertuples(index=False, name=None))
             html = (f"<h2>ใบเสร็จรับเงิน</h2><p>เลขที่ {r.Invoice_No} · {r.Confirmed_At}"
                     f"<br>ลูกค้า: {r.Full_Name}</p>"
                     f"<table border=1 cellpadding=6 style='border-collapse:collapse'>"
