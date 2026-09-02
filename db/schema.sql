@@ -75,7 +75,8 @@ CREATE TABLE LEAD_ACTIVITY (
     Activity_ID      TEXT(10)  PRIMARY KEY,
     Lead_ID          TEXT(10)  NOT NULL,
     Activity_Type    TEXT(50)  NOT NULL
-                               CHECK (Activity_Type IN ('โทรศัพท์','อีเมล','ส่งไลน์','นัดพบ')),
+                               CHECK (Activity_Type IN
+                                     ('โทรศัพท์','อีเมล','ส่งไลน์','นัดพบ','ส่งโปรโมชัน')),
     Activity_Date    TEXT      NOT NULL,
     Employee_ID      TEXT(10)  NOT NULL,          -- พนักงานขายผู้รับผิดชอบการติดต่อรอบนี้
     Notes            TEXT,
@@ -96,7 +97,10 @@ CREATE TABLE SALE (
     Total_Amount   REAL     NOT NULL DEFAULT 0 CHECK (Total_Amount >= 0),
     Sale_Status    TEXT(20) NOT NULL DEFAULT 'ออกใบเสนอราคาแล้ว'
                             CHECK (Sale_Status IN
-                                  ('ออกใบเสนอราคาแล้ว','รอการตรวจสอบชำระเงิน','ปิดการขายสำเร็จ')),
+                                  ('ออกใบเสนอราคาแล้ว','รอตรวจสอบคำสั่งซื้อ',
+                                   'รอการตรวจสอบชำระเงิน','ปิดการขายสำเร็จ')),
+    Order_Confirmed_At TEXT,                      -- 3.1: ผู้สนใจยืนยันคำสั่งซื้อ
+    Payment_Slip   TEXT,                          -- 3.2: ชื่อไฟล์สลิปที่อัปโหลด (uploads/)
     Invoice_No     TEXT(20) UNIQUE,
     Payment_Ref    TEXT(100),
     Confirmed_At   TEXT,
@@ -147,6 +151,8 @@ CREATE TABLE TICKET (
     Employee_ID      TEXT(10),                  -- พนักงาน/ช่างที่รับผิดชอบเคส (NULL = ยังไม่มอบหมาย)
     Created_At       TEXT      NOT NULL DEFAULT (datetime('now','localtime')),
     Closed_At        TEXT,
+    Service_Rating   INTEGER   CHECK (Service_Rating BETWEEN 1 AND 5),  -- 4.3: ลูกค้าประเมินผลบริการ
+    Service_Feedback TEXT,
     FOREIGN KEY (Customer_ID) REFERENCES CUSTOMER(Customer_ID) ON DELETE CASCADE,
     FOREIGN KEY (Product_ID)  REFERENCES PRODUCT(Product_ID)   ON DELETE SET NULL,
     FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID)

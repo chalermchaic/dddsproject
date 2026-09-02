@@ -9,6 +9,17 @@ from contextlib import contextmanager
 import pandas as pd
 
 DB_PATH = os.getenv("CRM_DB_PATH", os.path.join("db", "crm.db"))
+UPLOAD_DIR = os.getenv("CRM_UPLOAD_DIR", "uploads")
+
+
+def save_upload(uploaded_file, prefix: str = "file") -> str:
+    """เก็บไฟล์ที่ผู้ใช้อัปโหลด (เช่น สลิปโอนเงิน) ลง uploads/ แล้วคืนชื่อไฟล์"""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = os.path.splitext(getattr(uploaded_file, "name", ""))[1] or ".bin"
+    fname = f"{prefix}{ext}"
+    with open(os.path.join(UPLOAD_DIR, fname), "wb") as fh:
+        fh.write(uploaded_file.getbuffer())
+    return fname
 
 
 @contextmanager

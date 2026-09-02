@@ -148,7 +148,10 @@ for i in range(1, N_LEADS+1):
                 total += sub
                 sdetails.append((sid, prd[0], qty, unit, sub))
             sales.append((sid, lid, lead_owner, f"QT-{first_buy.year}-{s_no:04d}", dd(first_buy),
-                          round(total,2), "ปิดการขายสำเร็จ", f"INV-{first_buy.year}-{s_no:04d}",
+                          round(total,2), "ปิดการขายสำเร็จ",
+                          dt(first_buy - timedelta(days=1)),            # Order_Confirmed_At
+                          f"slip_{sid}.jpg",                            # Payment_Slip
+                          f"INV-{first_buy.year}-{s_no:04d}",
                           f"TRF{random.randint(100000,999999)}",
                           dt(first_buy + timedelta(days=random.randint(1,5)))))
             s_no += 1
@@ -161,20 +164,25 @@ for i in range(1, N_LEADS+1):
                           str(random.randint(1000000000000,9999999999999)),
                           addr, addr, ctype, dd(last + timedelta(days=1))))
     else:
-        # lead ที่ไม่ปิด บางส่วนเคยได้ใบเสนอราคา (ค้างสถานะ)
+        # lead ที่ไม่ปิด บางส่วนเคยได้ใบเสนอราคา — ค้างอยู่ในขั้นใดขั้นหนึ่งของ Process 3.0
         if status == "อยู่ระหว่างเสนอขาย" and random.random() < 0.6:
             sid = f"SL{s_no:04d}"
             prd = random.choice(products); qty = random.randint(1,2)
             unit = round(prd[3]*(1-disc/100),2); sub = round(unit*qty,2)
             sdetails.append((sid, prd[0], qty, unit, sub))
+            sstatus = random.choice(["ออกใบเสนอราคาแล้ว", "รอตรวจสอบคำสั่งซื้อ",
+                                     "รอการตรวจสอบชำระเงิน"])
+            order_conf = (None if sstatus == "ออกใบเสนอราคาแล้ว"
+                          else dt(last + timedelta(days=random.randint(1,4))))
+            slip = (f"slip_{sid}.jpg"
+                    if sstatus == "รอการตรวจสอบชำระเงิน" and random.random() < 0.7 else None)
             sales.append((sid, lid, lead_owner, f"QT-{last.year}-{s_no:04d}", dd(last), sub,
-                          random.choice(["ออกใบเสนอราคาแล้ว","รอการตรวจสอบชำระเงิน"]),
-                          None, None, None))
+                          sstatus, order_conf, slip, None, None, None))
             s_no += 1
 
 cur.executemany("INSERT INTO LEAD          VALUES (?,?,?,?,?,?,?,?)", leads)
 cur.executemany("INSERT INTO LEAD_ACTIVITY VALUES (?,?,?,?,?,?,?)",  acts)
-cur.executemany("INSERT INTO SALE          VALUES (?,?,?,?,?,?,?,?,?,?)", sales)
+cur.executemany("INSERT INTO SALE          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", sales)
 cur.executemany("INSERT INTO SALE_DETAIL   VALUES (?,?,?,?,?)",      sdetails)
 cur.executemany("INSERT INTO CUSTOMER      VALUES (?,?,?,?,?,?,?,?)", customers)
 
@@ -199,9 +207,15 @@ for cid, lid, *_rest, ctype, mdate in customers:
         closed = dt(created + timedelta(days=dur)) if st=="ปิดเคสสำเร็จ" else None
         emp_id = None if st == "รอดำเนินการ" else random.choice(SUPPORT_IDS)
         support_name = EMP_NAME[emp_id] if emp_id else EMP_NAME[random.choice(SUPPORT_IDS)]
+        if st == "ปิดเคสสำเร็จ" and random.random() < 0.7:
+            rating = random.choices([5,4,3,2,1], weights=[0.4,0.3,0.15,0.1,0.05])[0]
+            feedback = random.choice(["แก้ไขรวดเร็ว ประทับใจ","บริการดี แต่รอนานไปนิด",
+                                      "เจ้าหน้าที่สุภาพมาก","ตอบกลับช้า","แก้ปัญหาได้ตรงจุด"])
+        else:
+            rating = feedback = None
         tickets.append((tid, cid, random.choice(products)[0], cat,
                         random.choice(TITLES[cat]), st, emp_id,
-                        dt(created), closed))
+                        dt(created), closed, rating, feedback))
         # ข้อความโต้ตอบ: เคสยิ่งนาน ยิ่งมีข้อความมาก
         n_msg = max(2, int(dur*0.9) + random.randint(1,3))
         t = created
@@ -217,7 +231,7 @@ for cid, lid, *_rest, ctype, mdate in customers:
             m_no += 1
             t += timedelta(hours=random.randint(2,20))
 
-cur.executemany("INSERT INTO TICKET         VALUES (?,?,?,?,?,?,?,?,?)", tickets)
+cur.executemany("INSERT INTO TICKET         VALUES (?,?,?,?,?,?,?,?,?,?,?)", tickets)
 cur.executemany("INSERT INTO TICKET_MESSAGE VALUES (?,?,?,?,?,?)",      msgs)
 
 con.commit()
@@ -226,9 +240,13 @@ con.commit()
 fk_errors = con.execute("PRAGMA foreign_key_check").fetchall()
 assert not fk_errors, f"❌ พบ FK ผิดพลาด: {fk_errors}"
 
+pipe = {s: sum(1 for x in sales if x[6] == s) for s in
+        ("ออกใบเสนอราคาแล้ว", "รอตรวจสอบคำสั่งซื้อ", "รอการตรวจสอบชำระเงิน", "ปิดการขายสำเร็จ")}
+rated = sum(1 for t in tickets if t[9] is not None)
 print(f"""✅ สร้างฐานข้อมูลสำเร็จ: {DB_PATH}
    EMPLOYEE {len(EMPLOYEES)} | CAMPAIGN {len(campaigns)} | PRODUCT {len(products)} | LEAD {len(leads)}
    LEAD_ACTIVITY {len(acts)} | SALE {len(sales)} | SALE_DETAIL {len(sdetails)}
-   CUSTOMER {len(customers)} | TICKET {len(tickets)} | TICKET_MESSAGE {len(msgs)}
+   CUSTOMER {len(customers)} | TICKET {len(tickets)} ({rated} มีคะแนน) | TICKET_MESSAGE {len(msgs)}
+   SALE pipeline: {pipe}
    บัญชีเข้าใช้งาน: {', '.join(e[4] for e in EMPLOYEES)}""")
 con.close()

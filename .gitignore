@@ -61,3 +61,7 @@ response*.md
 
 # Binary design exports (keep the .md/.txt text versions in git instead)
 *.pdf
+
+# Uploaded files (payment slips ฯลฯ) + generated test evidence
+uploads/
+docs/evidence/*.png
