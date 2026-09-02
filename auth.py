@@ -13,7 +13,12 @@ ROLE_TH = {
     "marketing": "ฝ่ายการตลาด",
     "sales":     "ฝ่ายขาย",
     "support":   "ฝ่ายบริการลูกค้า",
+    "guest":     "ผู้สนใจ / ลูกค้า (จำลอง)",
 }
+
+# บัญชีจำลองสำหรับสวมบทเป็น external entity (ผู้สนใจ/ลูกค้า) ใน DFD
+GUEST_USER = dict(employee_id=None, username="guest", name="ผู้สนใจ / ลูกค้า",
+                  role="guest", department="-", position="-")
 
 # หน้า → role ที่เข้าถึงได้  (ลำดับในลิสต์ = ลำดับในเมนู)
 PAGE_DEFS = [
@@ -31,6 +36,8 @@ PAGE_DEFS = [
          roles={"admin", "support"}),
     dict(path="pages/6_📊_Analytics_Dashboard.py", title="แดชบอร์ดวิเคราะห์",   icon="📊",
          roles={"admin", "marketing", "sales", "support"}),
+    dict(path="pages/9_🌐_Portal.py",              title="Portal ผู้สนใจ/ลูกค้า", icon="🌐",
+         roles={"guest"}),
 ]
 
 
@@ -89,21 +96,30 @@ def render_login(app_version: str = "") -> None:
         st.error("ยังไม่มีฐานข้อมูล — รัน `python db/seed_data.py` ก่อน")
         st.stop()
 
-    for role, label in ROLE_TH.items():
+    for role in ("admin", "marketing", "sales", "support"):
         sub = df[df.Role == role]
         if sub.empty:
             continue
-        st.subheader(f"{label}")
+        st.subheader(ROLE_TH[role])
         cols = st.columns(min(4, len(sub)) or 1)
         for i, r in enumerate(sub.itertuples()):
             with cols[i % len(cols)]:
                 st.markdown(f"**{r.Employee_Name}**  \n{r.Position}")
-                if st.button(f"เข้าใช้งานเป็น `{r.Username}`",
+                if st.button(f"เข้าใช้งานเป็น {r.Username}",
                              key=f"login_{r.Username}", use_container_width=True):
                     login(dict(employee_id=r.Employee_ID, username=r.Username,
                                name=r.Employee_Name, role=r.Role,
                                department=r.Department, position=r.Position))
                     st.rerun()
+
+    st.divider()
+    st.subheader(ROLE_TH["guest"])
+    st.caption("สวมบทเป็นผู้สนใจ/ลูกค้า เพื่อทดลอง flow ที่ส่งข้อมูลเข้าระบบ "
+               "(ลงทะเบียน, ยืนยันคำสั่งซื้อ, อัปโหลดสลิป, แจ้งปัญหา, ให้คะแนนบริการ)")
+    if st.button("🌐 เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)", use_container_width=True,
+                 key="login_guest"):
+        login(dict(GUEST_USER))
+        st.rerun()
 
 
 def sidebar_userbox(app_version: str = "") -> None:

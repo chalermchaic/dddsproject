@@ -5,7 +5,7 @@ import streamlit as st
 import auth
 from db.connection import cached_query, table_counts
 
-emp = auth.guard()
+emp = auth.guard("admin", "marketing", "sales", "support")
 
 st.markdown("""
 <style>

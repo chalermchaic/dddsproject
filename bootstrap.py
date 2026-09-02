@@ -45,6 +45,7 @@ REQUIRED_FILES = [
     "pages/4_👤_Customer_Profile.py",
     "pages/5_🎫_Support_Ticket.py",
     "pages/6_📊_Analytics_Dashboard.py",
+    "pages/9_🌐_Portal.py",
     ".streamlit/config.toml",
 ]
 
