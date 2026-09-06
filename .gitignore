@@ -21,12 +21,16 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
+# Virtual environments & env files
 .venv/
 venv/
 env/
 ENV/
 .env
+.env*.local
+
+# Streamlit
+.streamlit/secrets.toml
 
 # Databases
 *.db
@@ -55,15 +59,25 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Planning / scratch notes
 response*.md
 
-# Binary design exports (keep the .md/.txt text versions in git instead)
+# Binary design exports & presentations (keep markdown/text versions in git instead)
 *.pdf
+*.pptx
+*.xlsx
+*.docx
+
+# Backups & temporary files
+*_backup.*
+*_original_backup.*
+*.bak
+*.tmp
+*~
 
 # Uploaded files (payment slips ฯลฯ) + generated test evidence
 uploads/
 docs/evidence/
-.pytest_cache/
 test-results/
