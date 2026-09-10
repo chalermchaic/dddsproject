@@ -54,6 +54,7 @@
 
 # 🎯 Feature 1: Lead Scoring (พยากรณ์โอกาสปิดการขาย)
 
+* **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature1_lead_scoring_deep_dive.md`](feature1_lead_scoring_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/lead_scoring.py`](file:///c:/Users/momo/dev/dddsproject/analytics/lead_scoring.py)
 * **SQL View:** [`V_LEAD_FEATURES`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L195-L208)
 * **หน้าจอ UI:** [`pages/2_📞_Sales_Followup.py`](file:///c:/Users/momo/dev/dddsproject/pages/2_📞_Sales_Followup.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
@@ -109,6 +110,7 @@
 
 # 📊 Feature 2: Customer RFM Segmentation & K-Means (จัดเกรดและวิเคราะห์กลุ่มลูกค้า)
 
+* **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature2_rfm_segmentation_deep_dive.md`](feature2_rfm_segmentation_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/rfm_segmentation.py`](file:///c:/Users/momo/dev/dddsproject/analytics/rfm_segmentation.py)
 * **SQL View:** [`V_CUSTOMER_RFM`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L210-L219)
 * **หน้าจอ UI:** [`pages/1_📢_Marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
@@ -164,6 +166,7 @@
 
 # 🩺 Feature 3: Customer Health Score & Churn Risk (ประเมินสุขภาพและเตือนความเสี่ยงการยกเลิก)
 
+* **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature3_churn_health_score_deep_dive.md`](feature3_churn_health_score_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/churn_health.py`](file:///c:/Users/momo/dev/dddsproject/analytics/churn_health.py)
 * **SQL View:** [`V_SERVICE_HEALTH`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L221-L231)
 * **หน้าจอ UI:** [`pages/5_🎫_Support_Ticket.py`](file:///c:/Users/momo/dev/dddsproject/pages/5_🎫_Support_Ticket.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
@@ -213,6 +216,7 @@
 
 # 💰 Feature 4: Campaign Performance & Marketing ROI (วิเคราะห์ผลตอบแทนและประสิทธิภาพแคมเปญ)
 
+* **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature4_campaign_roi_deep_dive.md`](feature4_campaign_roi_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/campaign_roi.py`](file:///c:/Users/momo/dev/dddsproject/analytics/campaign_roi.py)
 * **SQL View:** [`V_CAMPAIGN_ROI`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L234-L247)
 * **หน้าจอ UI:** [`pages/1_📢_Marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)

@@ -146,6 +146,18 @@ python -m analytics.campaign_roi
 # หรือ:  make test
 ```
 
+---
+
+## 📚 คู่มือวิศวกรรมข้อมูลและการวิเคราะห์ (0% – 100%)
+
+- [📘 คู่มือรวม 4 Features หลัก (Overview)](docs/analytics_4_features_full_guide.md)
+- [🎯 Feature 1: Lead Scoring Deep Dive](docs/feature1_lead_scoring_deep_dive.md)
+- [📊 Feature 2: Customer RFM Segmentation & K-Means Deep Dive](docs/feature2_rfm_segmentation_deep_dive.md)
+- [🩺 Feature 3: Customer Health Score & Churn Risk Deep Dive](docs/feature3_churn_health_score_deep_dive.md)
+- [💰 Feature 4: Campaign Performance & Marketing ROI Deep Dive](docs/feature4_campaign_roi_deep_dive.md)
+
+---
+
 ## ⚙️ Tech Stack
 
 | ชั้น | เครื่องมือ |
