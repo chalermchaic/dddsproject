@@ -1,7 +1,7 @@
 # 📊 คู่มือเจาะลึก Feature 2: Customer RFM Segmentation & K-Means (0% – 100%)
 ## ระบบจัดเกรดและแบ่งกลุ่มลูกค้าเชิงกลยุทธ์ด้วย RFM Model และ Unsupervised Machine Learning
 **รายวิชา:** 070115302 การออกแบบฐานข้อมูลสำหรับวิทยาศาสตร์ข้อมูล (Database Design for Data Science: DDDS)  
-**อ้างอิงโค้ด:** `analytics/rfm_segmentation.py`, `db/schema.sql`, `pages/1_📢_Marketing.py`, `pages/4_👤_Customer_Profile.py`, `pages/6_📊_Analytics_Dashboard.py`
+**อ้างอิงโค้ด:** `analytics/rfm_segmentation.py`, `db/schema.sql`, `pages/1_marketing.py`, `pages/4_customer_profile.py`, `pages/6_analytics_dashboard.py`
 
 ---
 
@@ -182,12 +182,12 @@ Recency (สูง)
 
 ## 8. สรุปความเชื่อมโยงกับหน้าจอแอปพลิเคชัน (Streamlit UI Integration)
 
-* **หน้าข้อมูลลูกค้า ([4_👤_Customer_Profile.py](file:///c:/Users/momo/dev/dddsproject/pages/4_👤_Customer_Profile.py)):**
-  * แสดง Badge สีระบุกลุ่ม RFM ของลูกค้าแต่ละราย พร้อมค่า Recency, Frequency, Monetary ชัดเจน
-  * แสดงข้อความกลยุทธ์ที่แนะนำสำหรับลูกค้ารายนั้นๆ
-* **หน้างบการตลาด ([1_📢_Marketing.py](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py)):**
-  * ตัวกรองดึงรายชื่อลูกค้าตามเซกเมนต์ (เช่น เลือกลูกค้ากลุ่ม "At Risk" ทั้งหมด) เพื่อกดส่งแคมเปญโปรโมชันกระตุ้นยอดขาย
-* **หน้าแดชบอร์ดวิเคราะห์ ([6_📊_Analytics_Dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py) — แท็บ 2):**
+* **หน้าข้อมูลลูกค้า ([4_customer_profile.py](file:///c:/Users/momo/dev/dddsproject/pages/4_customer_profile.py)):**
+  * พนักงานเลือกดูรายชื่อลูกค้าทีละรายเพื่อดูคะแนน $R, F, M$ และ Segment ของลูกค้ารายนั้น
+  * แสดง Spider Radar Chart (3 แกน) แสดงจุดเด่น-จุดด้อยของลูกค้าเทียบกับค่าเฉลี่ย
+* **หน้างบการตลาด ([1_marketing.py](file:///c:/Users/momo/dev/dddsproject/pages/1_marketing.py)):**
+  * สรุปงบประมาณและแคมเปญที่มุ่งเน้นไปยังแต่ละ Segment
+* **หน้าแดชบอร์ดวิเคราะห์ ([6_analytics_dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py) — แท็บ 2):**
   * แผนภูมิ 3 มิติ (3D Scatter Plot) แสดงพิกัดลูกค้าในแกน Recency, Frequency, Monetary
   * แผนภูมิแท่งสรุปสัดส่วนลูกค้าและส่วนแบ่งรายได้ตามเซกเมนต์ (Revenue Share Analysis)
   * กราฟ Elbow Curve และ Silhouette Analysis สำหรับนักวิทยาศาสตร์ข้อมูลตรวจสอบความเหมาะสมของกลุ่ม K-Means

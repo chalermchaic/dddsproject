@@ -57,7 +57,7 @@
 * **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature1_lead_scoring_deep_dive.md`](feature1_lead_scoring_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/lead_scoring.py`](file:///c:/Users/momo/dev/dddsproject/analytics/lead_scoring.py)
 * **SQL View:** [`V_LEAD_FEATURES`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L195-L208)
-* **หน้าจอ UI:** [`pages/2_📞_Sales_Followup.py`](file:///c:/Users/momo/dev/dddsproject/pages/2_📞_Sales_Followup.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
+* **หน้าจอ UI:** [`pages/2_sales_followup.py`](file:///c:/Users/momo/dev/dddsproject/pages/2_sales_followup.py) และ [`pages/6_analytics_dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py)
 
 ### 1.1 ที่มา ที่ไป และหลักคิดทางธุรกิจ (Business Rationale)
 * **ปัญหา:** พนักงานขายมีเวลาโทรติดตามลูกค้าจำกัด (15–20 รายชื่อ/วัน) แต่มีผู้สนใจเข้ามาจากแคมเปญวันละ 30–60 รายชื่อ การโทรแบบสุ่มหรือโทรตามลำดับก่อนหลัง ทำให้เสียเวลากับผู้สนใจที่ไม่ต้องการซื้อจริง และพลาดผู้สนใจที่มีความเร่งด่วนในการซื้อ (High Purchase Intent)
@@ -113,7 +113,7 @@
 * **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature2_rfm_segmentation_deep_dive.md`](feature2_rfm_segmentation_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/rfm_segmentation.py`](file:///c:/Users/momo/dev/dddsproject/analytics/rfm_segmentation.py)
 * **SQL View:** [`V_CUSTOMER_RFM`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L210-L219)
-* **หน้าจอ UI:** [`pages/1_📢_Marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
+* **หน้าจอ UI:** [`pages/1_marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_marketing.py) และ [`pages/6_analytics_dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py)
 
 ### 2.1 ที่มา ที่ไป และหลักคิดทางธุรกิจ (Business Rationale)
 * **ปัญหา:** การทำการตลาดแบบเหวี่ยงแห (Mass Marketing) ส่งโปรโมชันเดียวกันให้ลูกค้าทุกคน ทำให้สิ้นเปลืองงบประมาณ ลูกค้าชั้นดี (VIP) ไม่ได้รับความพิเศษ ส่วนลูกค้าที่กำลังจะเลิกซื้อก็ไม่ได้รับการกระตุ้นอย่างทันท่วงที
@@ -169,7 +169,7 @@
 * **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature3_churn_health_score_deep_dive.md`](feature3_churn_health_score_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/churn_health.py`](file:///c:/Users/momo/dev/dddsproject/analytics/churn_health.py)
 * **SQL View:** [`V_SERVICE_HEALTH`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L221-L231)
-* **หน้าจอ UI:** [`pages/5_🎫_Support_Ticket.py`](file:///c:/Users/momo/dev/dddsproject/pages/5_🎫_Support_Ticket.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
+* **หน้าจอ UI:** [`pages/5_support_ticket.py`](file:///c:/Users/momo/dev/dddsproject/pages/5_support_ticket.py) และ [`pages/6_analytics_dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py)
 
 ### 3.1 ที่มา ที่ไป และหลักคิดทางธุรกิจ (Business Rationale)
 * **ปัญหา:** ลูกค้ามักไม่แจ้งล่วงหน้าก่อนจะเปลี่ยนไปใช้คู่แข่ง เมื่อลูกค้าประสบปัญหาการใช้งานซ้ำๆ หรือได้รับการแก้ปัญหาที่ล่าช้า ความไม่พอใจจะสะสมจนเกิดการเลิกซื้อ (Customer Churn) การดึงลูกค้าใหม่มีต้นทุนสูงกว่าการรักษาลูกค้าเก่าถึง 5 เท่า
@@ -219,7 +219,7 @@
 * **📖 คู่มือเจาะลึกฉบับสมบูรณ์ (0% – 100%):** [`docs/feature4_campaign_roi_deep_dive.md`](feature4_campaign_roi_deep_dive.md)
 * **ไฟล์โค้ดหลัก:** [`analytics/campaign_roi.py`](file:///c:/Users/momo/dev/dddsproject/analytics/campaign_roi.py)
 * **SQL View:** [`V_CAMPAIGN_ROI`](file:///c:/Users/momo/dev/dddsproject/db/schema.sql#L234-L247)
-* **หน้าจอ UI:** [`pages/1_📢_Marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py) และ [`pages/6_📊_Analytics_Dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)
+* **หน้าจอ UI:** [`pages/1_marketing.py`](file:///c:/Users/momo/dev/dddsproject/pages/1_marketing.py) และ [`pages/6_analytics_dashboard.py`](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py)
 
 ### 4.1 ที่มา ที่ไป และหลักคิดทางธุรกิจ (Business Rationale)
 * **ปัญหา:** ฝ่ายการตลาดมักวัดผลจากตัวเลขหลอกตา (Vanity Metrics) เช่น จำนวนคลิก หรือจำนวนผู้สนใจ แต่ผู้บริหารต้องการทราบความคุ้มค่าทางการเงินสุทธิว่างบประมาณที่ลงทุนไปสร้างกำไรหรือขาดทุนเท่าใด

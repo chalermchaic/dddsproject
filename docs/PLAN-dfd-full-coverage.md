@@ -59,7 +59,7 @@
   → insert `LEAD_ACTIVITY` type `'ส่งโปรโมชัน'` + Notes = ชื่อแคมเปญ/ส่วนลด/สินค้าที่สนใจ (ดึงจาก `CAMPAIGN` ของ lead)
 - แสดง preview "เนื้อหาที่ส่ง" (ชื่อโปรโมชัน + Discount_Rate + รายการสินค้า) — คือ flow `รายละเอียดโปรโมชัน → ผู้สนใจ`
 
-### C. Process 2.1 — To-Do List ประจำวัน  (`pages/2_📞_Sales_Followup.py`)
+### C. Process 2.1 — To-Do List ประจำวัน  (`pages/2_sales_followup.py`)
 - เพิ่มแท็บแรก **"📅 คิวติดตามวันนี้"** (ก่อนแท็บ AI):
   - query lead ที่ `Followup_Status IN ('รอการติดต่อ','อยู่ระหว่างเสนอขาย')` และ
     `Next_Action_Date <= date('now')` (ครบกำหนด/เลยกำหนด) จาก activity ล่าสุด
@@ -67,7 +67,7 @@
   - ปุ่มลัด "บันทึกกิจกรรม" กระโดดไปแท็บ 2 พร้อม lead ที่เลือก (`st.session_state`)
 - reuse `SQL` pattern ใน `pages/2` เดิม + `analytics/lead_scoring.score_open_leads` สำหรับจัดลำดับในกลุ่ม
 
-### D. Process 3.0 — แยก 3.1 / 3.2 / 3.3  (`pages/3_🧾_Order_Billing.py`)
+### D. Process 3.0 — แยก 3.1 / 3.2 / 3.3  (`pages/3_order_billing.py`)
 เปลี่ยนจาก 3 แท็บ (`ออกใบเสนอราคา` / `ยืนยันชำระเงิน` / `ประวัติ`) เป็น **5 แท็บ**:
 1. **ออกใบเสนอราคา** (2.3) — เดิม
 2. **📥 รับ & ตรวจคำสั่งซื้อ (3.1)** — list SALE ที่ `ออกใบเสนอราคาแล้ว`; staff กด "ยืนยันคำสั่งซื้อถูกต้อง"
@@ -88,7 +88,7 @@
   = flow `ประวัติการสั่งซื้อและรับบริการ`; ปุ่ม export CSV
 - `pages/6` แท็บ 3 (Churn/Health): เสริม avg `Service_Rating` เป็นตัวแปร health (ถ้ามีเวลา — optional)
 
-### F. Process 5.2 — รายงานสรุปยอดขาย  (`pages/6_📊_Analytics_Dashboard.py` เพิ่มแท็บ)
+### F. Process 5.2 — รายงานสรุปยอดขาย  (`pages/6_analytics_dashboard.py` เพิ่มแท็บ)
 - เพิ่มแท็บ **"5️⃣ รายงานสรุปยอดขาย"** (role: admin, sales, marketing):
   - ยอดขายรวม / จำนวนบิล / ค่าเฉลี่ยต่อบิล (period filter: เดือน/ไตรมาส/ปี)
   - แยกตาม **พนักงานขาย** (ใช้ `SALE.Employee_ID` ที่เพิ่งเพิ่ม) — leaderboard
@@ -96,10 +96,10 @@
   - ปุ่ม **"⬇️ ดาวน์โหลดรายงาน (CSV)"** = flow `รายงานสรุปยอดขาย → ฝ่ายขาย`
 - reuse `SQL_TOP_PRODUCT`, `SQL_MONTHLY`, `channel_performance()` ใน `analytics/campaign_roi.py`
 
-### G. หน้า Portal จำลอง ผู้สนใจ/ลูกค้า  (`pages/9_🌐_Portal.py` + `auth.py`)
+### G. หน้า Portal จำลอง ผู้สนใจ/ลูกค้า  (`pages/9_portal.py` + `auth.py`)
 - `auth.py`: เพิ่มปุ่มบนหน้า login **"🌐 เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)"**
   → set `st.session_state["user"] = {role: "guest", ...}`; `PAGE_DEFS` ให้ role `guest` เห็นเฉพาะ `pages/9`
-- `pages/9_🌐_Portal.py` — เลือกว่าจะสวมบทเป็น Lead ไหน / Customer ไหน แล้วทำ:
+- `pages/9_portal.py` — เลือกว่าจะสวมบทเป็น Lead ไหน / Customer ไหน แล้วทำ:
   | แท็บ | flow DFD ที่ทดลอง |
   |---|---|
   | ลงทะเบียนความสนใจ | 1.2 (ผู้สนใจ → ข้อมูลการติดต่อ) |
@@ -126,12 +126,12 @@
 | `db/seed_data.py` | seed ข้อมูลให้ครบทุกสถานะใหม่ + rating |
 | `db/connection.py` | + `save_upload()` helper |
 | `auth.py` | + role `guest` + ปุ่ม Portal บนหน้า login + `PAGE_DEFS` |
-| `pages/2_📞_Sales_Followup.py` | + แท็บ "คิวติดตามวันนี้" (2.1), + ปุ่มส่งโปรโมชัน (1.3) |
-| `pages/3_🧾_Order_Billing.py` | 3 แท็บ → 5 แท็บ (3.1 / 3.2+สลิป / 3.3+ใบเสร็จ) |
-| `pages/4_👤_Customer_Profile.py` | + การ์ด "ประวัติสั่งซื้อ+รับบริการ" (4.3) |
-| `pages/5_🎫_Support_Ticket.py` | + สรุปผล + ประเมินผลบริการ (4.3) |
-| `pages/6_📊_Analytics_Dashboard.py` | + แท็บ "รายงานสรุปยอดขาย" (5.2) |
-| `pages/9_🌐_Portal.py` | **ใหม่** — external entity inbound/outbound |
+| `pages/2_sales_followup.py` | + แท็บ "คิวติดตามวันนี้" (2.1), + ปุ่มส่งโปรโมชัน (1.3) |
+| `pages/3_order_billing.py` | 3 แท็บ → 5 แท็บ (3.1 / 3.2+สลิป / 3.3+ใบเสร็จ) |
+| `pages/4_customer_profile.py` | + การ์ด "ประวัติสั่งซื้อ+รับบริการ" (4.3) |
+| `pages/5_support_ticket.py` | + สรุปผล + ประเมินผลบริการ (4.3) |
+| `pages/6_analytics_dashboard.py` | + แท็บ "รายงานสรุปยอดขาย" (5.2) |
+| `pages/9_portal.py` | **ใหม่** — external entity inbound/outbound |
 | `tests/` | **ใหม่** — pytest (AppTest) + Playwright e2e + capture หลักฐาน |
 | `requirements-dev.txt` | **ใหม่** — `pytest`, `pytest-playwright`, `playwright` |
 | `.github/workflows/ci.yml` | **ใหม่** (optional) — seed + bootstrap --check + pytest |

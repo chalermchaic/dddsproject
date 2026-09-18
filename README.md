@@ -125,13 +125,14 @@ analytics/
   churn_health.py          งานที่ 3 — Customer Health Score (0–100) + churn risk
   campaign_roi.py          งานที่ 4 — Conversion / CPL / CAC / ROAS / ROI + chi-square
 pages/
-  0_🏠_Home.py              ภาพรวม + KPI (หน้าแรกหลังล็อกอิน)
-  1_📢_Marketing.py         Process 1.0 — แคมเปญ + บันทึกผู้สนใจ
-  2_📞_Sales_Followup.py    Process 2.0 — คิวงานจัดลำดับด้วย ML + บันทึกกิจกรรม
-  3_🧾_Order_Billing.py     Process 3.0 — ใบเสนอราคา + ยืนยันชำระเงิน
-  4_👤_Customer_Profile.py  Process 4.0 — โปรไฟล์ลูกค้า + RFM รายบุคคล
-  5_🎫_Support_Ticket.py    Process 5.0 — เคสแจ้งปัญหา + บทสนทนา
-  6_📊_Analytics_Dashboard.py  แดชบอร์ดรวมผล Data Science ทั้ง 4 งาน
+  0_home.py                ภาพรวม + KPI (หน้าแรกหลังล็อกอิน)
+  1_marketing.py           Process 1.0 — แคมเปญ + บันทึกผู้สนใจ
+  2_sales_followup.py      Process 2.0 — คิวงานจัดลำดับด้วย ML + บันทึกกิจกรรม
+  3_order_billing.py       Process 3.0 — ใบเสนอราคา + ยืนยันชำระเงิน
+  4_customer_profile.py    Process 4.0 — โปรไฟล์ลูกค้า + RFM รายบุคคล
+  5_support_ticket.py      Process 5.0 — เคสแจ้งปัญหา + บทสนทนา
+  6_analytics_dashboard.py แดชบอร์ดรวมผล Data Science ทั้ง 4 งาน
+  9_portal.py              Portal จำลองสำหรับผู้สนใจและลูกค้า (External Entity)
 ```
 
 ---

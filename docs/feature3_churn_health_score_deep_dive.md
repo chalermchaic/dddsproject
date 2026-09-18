@@ -1,7 +1,7 @@
 # 🩺 คู่มือเจาะลึก Feature 3: Customer Health Score & Churn Risk (0% – 100%)
 ## ระบบประเมินสุขภาพความสัมพันธ์ลูกค้าและเตือนภัยความเสี่ยงการยกเลิก (Proactive Churn Alert)
 **รายวิชา:** 070115302 การออกแบบฐานข้อมูลสำหรับวิทยาศาสตร์ข้อมูล (Database Design for Data Science: DDDS)  
-**อ้างอิงโค้ด:** `analytics/churn_health.py`, `db/schema.sql`, `pages/4_👤_Customer_Profile.py`, `pages/5_🎫_Support_Ticket.py`, `pages/6_📊_Analytics_Dashboard.py`
+**อ้างอิงโค้ด:** `analytics/churn_health.py`, `db/schema.sql`, `pages/4_customer_profile.py`, `pages/5_support_ticket.py`, `pages/6_analytics_dashboard.py`
 
 ---
 
@@ -199,12 +199,12 @@ $$\text{Health Score} = 35\%(R_{\text{norm}}) + 20\%(F_{\text{norm}}) + 15\%(M_{
 
 ## 8. สรุปความเชื่อมโยงกับหน้าจอแอปพลิเคชัน (Streamlit UI Integration)
 
-* **หน้าข้อมูลลูกค้า ([4_👤_Customer_Profile.py](file:///c:/Users/momo/dev/dddsproject/pages/4_👤_Customer_Profile.py)):**
+* **หน้าข้อมูลลูกค้า ([4_customer_profile.py](file:///c:/Users/momo/dev/dddsproject/pages/4_customer_profile.py)):**
   * มาตรวัดสุขภาพ (Health Meter / Gauge) แสดงคะแนนและระดับความเสี่ยงของลูกค้ารายตัว
   * แผนภูมิ Radar Chart 5 มิติ (Recency, Frequency, Monetary, Service, Resolution) แจกแจงจุดแข็งและจุดเปราะบาง
-* **หน้ารับแจ้งปัญหา ([5_🎫_Support_Ticket.py](file:///c:/Users/momo/dev/dddsproject/pages/5_🎫_Support_Ticket.py)):**
+* **หน้ารับแจ้งปัญหา ([5_support_ticket.py](file:///c:/Users/momo/dev/dddsproject/pages/5_support_ticket.py)):**
   * แสดงแท็กเตือนภัยสีแดงสำหรับ Ticket ที่เปิดโดยลูกค้ากลุ่ม "🔴 เสี่ยงสูง" เพื่อให้หัวหน้าทีม Support เข้ามาช่วยดูแลเป็นพิเศษ
-* **หน้าแดชบอร์ดวิเคราะห์ ([6_📊_Analytics_Dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py) — แท็บ 3):**
+* **หน้าแดชบอร์ดวิเคราะห์ ([6_analytics_dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py) — แท็บ 3):**
   * การ์ด KPI สรุปจำนวนลูกค้ากลุ่มเสี่ยงและมูลค่ารายได้ที่ตกอยู่ในความเสี่ยง (Revenue at Stake)
   * กราฟกระจายตัวสุขภาพลูกค้า (Health Score Distribution Histogram)
   * ตารางจัดอันดับ "10 ลูกค้าเสี่ยงสูงที่ต้องติดตามด่วนที่สุด" พร้อมปุ่มโทรติดต่อ

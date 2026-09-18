@@ -5,14 +5,14 @@ from streamlit.testing.v1 import AppTest
 from tests.conftest import USERS
 
 PAGE_ROLES = {
-    "pages/0_🏠_Home.py":               {"admin", "marketing", "sales", "support"},
-    "pages/1_📢_Marketing.py":           {"admin", "marketing"},
-    "pages/2_📞_Sales_Followup.py":      {"admin", "sales"},
-    "pages/3_🧾_Order_Billing.py":       {"admin", "sales"},
-    "pages/4_👤_Customer_Profile.py":    {"admin", "marketing", "sales", "support"},
-    "pages/5_🎫_Support_Ticket.py":      {"admin", "support"},
-    "pages/6_📊_Analytics_Dashboard.py": {"admin", "marketing", "sales", "support"},
-    "pages/9_🌐_Portal.py":             {"guest"},
+    "pages/0_home.py":                {"admin", "marketing", "sales", "support"},
+    "pages/1_marketing.py":           {"admin", "marketing"},
+    "pages/2_sales_followup.py":      {"admin", "sales"},
+    "pages/3_order_billing.py":       {"admin", "sales"},
+    "pages/4_customer_profile.py":    {"admin", "marketing", "sales", "support"},
+    "pages/5_support_ticket.py":      {"admin", "support"},
+    "pages/6_analytics_dashboard.py": {"admin", "marketing", "sales", "support"},
+    "pages/9_portal.py":              {"guest"},
 }
 ALL_ROLES = set(USERS)
 

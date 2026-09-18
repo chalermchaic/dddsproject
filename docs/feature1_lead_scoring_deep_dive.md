@@ -1,7 +1,7 @@
 # 🎯 คู่มือเจาะลึก Feature 1: Lead Scoring (0% – 100%)
 ## ระบบพยากรณ์โอกาสปิดการขายและจัดลำดับผู้สนใจอัจฉริยะ (Smart Lead Scoring)
 **รายวิชา:** 070115302 การออกแบบฐานข้อมูลสำหรับวิทยาศาสตร์ข้อมูล (Database Design for Data Science: DDDS)  
-**อ้างอิงโค้ด:** `analytics/lead_scoring.py`, `db/schema.sql`, `pages/2_📞_Sales_Followup.py`, `pages/6_📊_Analytics_Dashboard.py`
+**อ้างอิงโค้ด:** `analytics/lead_scoring.py`, `db/schema.sql`, `pages/2_sales_followup.py`, `pages/6_analytics_dashboard.py`
 
 ---
 
@@ -196,10 +196,10 @@ Machine Learning Model มีการเสื่อมถอยของปร
 
 ## 8. สรุปความเชื่อมโยงกับหน้าจอแอปพลิเคชัน (Streamlit UI Integration)
 
-* **หน้างานขาย ([2_📞_Sales_Followup.py](file:///c:/Users/momo/dev/dddsproject/pages/2_📞_Sales_Followup.py)):**
+* **หน้างานขาย ([2_sales_followup.py](file:///c:/Users/momo/dev/dddsproject/pages/2_sales_followup.py)):**
   * แสดงตารางคิวงานประจำวันพร้อม Badge สี (🔥 แดง, 🌤 ส้ม, ❄️ ฟ้า)
   * เรียงลำดับจากคะแนนสูงสุดลงมา ช่วยให้ทีมขายไม่พลาดลูกค้าสำคัญ
-* **หน้างานวิเคราะห์ ([6_📊_Analytics_Dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py)):**
+* **หน้างานวิเคราะห์ ([6_analytics_dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py)):**
   * กราฟ ROC Curve และพื้นที่ใต้กราฟ (AUC)
   * ตาราง Confusion Matrix (เปรียบเทียบผลพยากรณ์ vs ความเป็นจริง)
   * แผนภูมิแท่ง Feature Importance แจกแจงปัจจัยขับเคลื่อนยอดขาย

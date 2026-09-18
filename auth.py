@@ -22,21 +22,21 @@ GUEST_USER = dict(employee_id=None, username="guest", name="ผู้สนใ�
 
 # หน้า → role ที่เข้าถึงได้  (ลำดับในลิสต์ = ลำดับในเมนู)
 PAGE_DEFS = [
-    dict(path="pages/0_🏠_Home.py",               title="ภาพรวม",             icon="🏠",
+    dict(path="pages/0_home.py",                title="ภาพรวม",              icon="🏠", url_path="home",
          roles={"admin", "marketing", "sales", "support"}),
-    dict(path="pages/1_📢_Marketing.py",           title="งานการตลาด",         icon="📢",
+    dict(path="pages/1_marketing.py",           title="งานการตลาด",          icon="📢", url_path="marketing",
          roles={"admin", "marketing"}),
-    dict(path="pages/2_📞_Sales_Followup.py",      title="ติดตามการขาย",       icon="📞",
+    dict(path="pages/2_sales_followup.py",      title="ติดตามการขาย",        icon="📞", url_path="sales-followup",
          roles={"admin", "sales"}),
-    dict(path="pages/3_🧾_Order_Billing.py",       title="ใบเสนอราคา/ชำระเงิน", icon="🧾",
+    dict(path="pages/3_order_billing.py",       title="ใบเสนอราคา/ชำระเงิน",  icon="🧾", url_path="order-billing",
          roles={"admin", "sales"}),
-    dict(path="pages/4_👤_Customer_Profile.py",    title="ข้อมูลลูกค้า",        icon="👤",
+    dict(path="pages/4_customer_profile.py",    title="ข้อมูลลูกค้า",         icon="👤", url_path="customer-profile",
          roles={"admin", "marketing", "sales", "support"}),
-    dict(path="pages/5_🎫_Support_Ticket.py",      title="รับแจ้งปัญหา",        icon="🎫",
+    dict(path="pages/5_support_ticket.py",      title="รับแจ้งปัญหา",         icon="🎫", url_path="support-ticket",
          roles={"admin", "support"}),
-    dict(path="pages/6_📊_Analytics_Dashboard.py", title="แดชบอร์ดวิเคราะห์",   icon="📊",
+    dict(path="pages/6_analytics_dashboard.py", title="แดชบอร์ดวิเคราะห์",    icon="📊", url_path="analytics-dashboard",
          roles={"admin", "marketing", "sales", "support"}),
-    dict(path="pages/9_🌐_Portal.py",              title="Portal ผู้สนใจ/ลูกค้า", icon="🌐",
+    dict(path="pages/9_portal.py",              title="Portal ผู้สนใจ/ลูกค้า", icon="🌐", url_path="portal",
          roles={"guest"}),
 ]
 
@@ -77,7 +77,8 @@ def build_navigation(role: str):
     """คืนอ็อบเจกต์ st.navigation ที่มีเฉพาะหน้าที่ role นี้เข้าถึงได้"""
     allowed = [d for d in PAGE_DEFS if role in d["roles"]]
     pages = [
-        st.Page(d["path"], title=d["title"], icon=d["icon"], default=(i == 0))
+        st.Page(d["path"], title=d["title"], icon=d["icon"],
+                url_path=d.get("url_path"), default=(i == 0))
         for i, d in enumerate(allowed)
     ]
     return st.navigation(pages)

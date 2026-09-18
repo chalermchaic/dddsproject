@@ -1,7 +1,7 @@
 # 💰 คู่มือเจาะลึก Feature 4: Campaign Performance & Marketing ROI (0% – 100%)
 ## ระบบวิเคราะห์ผลตอบแทนการลงทุนแคมเปญ ท่อส่งการตลาด และทดสอบสมมติฐานทางสถิติ
 **รายวิชา:** 070115302 การออกแบบฐานข้อมูลสำหรับวิทยาศาสตร์ข้อมูล (Database Design for Data Science: DDDS)  
-**อ้างอิงโค้ด:** `analytics/campaign_roi.py`, `db/schema.sql`, `pages/1_📢_Marketing.py`, `pages/6_📊_Analytics_Dashboard.py`
+**อ้างอิงโค้ด:** `analytics/campaign_roi.py`, `db/schema.sql`, `pages/1_marketing.py`, `pages/6_analytics_dashboard.py`
 
 ---
 
@@ -196,10 +196,10 @@ $$\chi^2 = \sum \frac{(O - E)^2}{E}$$
 
 ## 8. สรุปความเชื่อมโยงกับหน้าจอแอปพลิเคชัน (Streamlit UI Integration)
 
-* **หน้างบการตลาด ([1_📢_Marketing.py](file:///c:/Users/momo/dev/dddsproject/pages/1_📢_Marketing.py)):**
-  * ฟอร์มสร้างแคมเปญใหม่พร้อมระบุงบประมาณและช่องทาง
-  * ตารางสรุปแคมเปญปัจจุบันพร้อมแสดงจำนวน Lead ที่ได้มา
-* **หน้าแดชบอร์ดวิเคราะห์ ([6_📊_Analytics_Dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_📊_Analytics_Dashboard.py) — แท็บ 4):**
+* **หน้างบการตลาด ([1_marketing.py](file:///c:/Users/momo/dev/dddsproject/pages/1_marketing.py)):**
+  * ฝ่ายการตลาดบันทึกแคมเปญใหม่ กำหนด Budget_Cost, Start_Date, End_Date และ Discount_Rate
+  * ดูตารางภาพรวมแคมเปญ พร้อมตัวเลขสรุป CPL และ Conversion Rate เบื้องต้น
+* **หน้าแดชบอร์ดวิเคราะห์ ([6_analytics_dashboard.py](file:///c:/Users/momo/dev/dddsproject/pages/6_analytics_dashboard.py) — แท็บ 4):**
   * การ์ด KPI ทางการเงิน 4 มิติ: Total Spend, Total Revenue, Net ROI %, Average ROAS
   * ตารางเปรียบเทียบแคมเปญพร้อม Badge ประเมินผล (✅ คุ้มค่า, ⚠️ พอไปได้, ❌ ขาดทุน)
   * กราฟแท่งเปรียบเทียบ Conversion Rate และ Revenue per Lead รายช่องทาง
