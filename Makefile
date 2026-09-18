@@ -32,7 +32,8 @@ test:               ## ชั้น 1 + 2 (เร็ว, ไม่ใช้ brow
 e2e:                ## ชั้น 3 — Playwright
 	pytest tests/e2e -q --browser chromium
 
-evidence: e2e       ## ชั้น 3 + ประกอบ docs/evidence/README.md
+evidence:           ## ถ่ายภาพหลักฐาน UI จริงครบ 14 กิจกรรม + ประกอบ docs/evidence/README.md
+	python tests/e2e/capture_manual_evidence.py
 	python tests/e2e/build_report.py
 
 zip:
