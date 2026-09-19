@@ -2,6 +2,7 @@
 Campaign Performance & ROI
 ตัวชี้วัด: Conversion Rate, CPL, CAC, ROAS, ROI + วิเคราะห์รายช่องทาง
 """
+import numpy as np
 import pandas as pd
 from scipy import stats
 
@@ -12,12 +13,22 @@ def campaign_overview() -> pd.DataFrame:
     df = run_query("SELECT * FROM V_CAMPAIGN_ROI ORDER BY ROI DESC")
     if df.empty:
         return df
-    df["CAC"] = (df["Budget_Cost"] /
-                 df["Converted_Leads"].replace(0, pd.NA)).round(2)
-    df["ROAS"] = (df["Revenue"] / df["Budget_Cost"].replace(0, pd.NA)).round(2)
+    df["CAC"] = np.where(
+        df["Converted_Leads"] > 0,
+        (df["Budget_Cost"] / df["Converted_Leads"]).round(2),
+        np.nan,
+    )
+    df["ROAS"] = np.where(
+        df["Budget_Cost"] > 0,
+        (df["Revenue"] / df["Budget_Cost"]).round(2),
+        np.nan,
+    )
     df["ROI_%"] = (df["ROI"] * 100).round(2)
-    df["Avg_Deal_Size"] = (df["Revenue"] /
-                           df["Converted_Leads"].replace(0, pd.NA)).round(2)
+    df["Avg_Deal_Size"] = np.where(
+        df["Converted_Leads"] > 0,
+        (df["Revenue"] / df["Converted_Leads"]).round(2),
+        np.nan,
+    )
     df["Verdict"] = pd.cut(df["ROI_%"], bins=[-1e9, 0, 100, 1e9],
                            labels=["❌ ขาดทุน", "⚠️ พอไปได้", "✅ คุ้มค่า"])
     return df

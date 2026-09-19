@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -24,8 +25,16 @@ with tab1:
         LEFT JOIN LEAD l ON l.Campaign_ID = c.Campaign_ID
         GROUP BY c.Campaign_ID ORDER BY c.Start_Date DESC
     """)
-    df["อัตราแปลง %"] = (100 * df["ปิดได้"] / df["ผู้สนใจ"].replace(0, pd.NA)).round(1)
-    df["ต้นทุน/ผู้สนใจ"] = (df["งบประมาณ"] / df["ผู้สนใจ"].replace(0, pd.NA)).round(0)
+    df["อัตราแปลง %"] = np.where(
+        df["ผู้สนใจ"] > 0,
+        (100 * df["ปิดได้"] / df["ผู้สนใจ"]).round(1),
+        0.0,
+    )
+    df["ต้นทุน/ผู้สนใจ"] = np.where(
+        df["ผู้สนใจ"] > 0,
+        (df["งบประมาณ"] / df["ผู้สนใจ"]).round(0),
+        np.nan,
+    )
 
     m1, m2, m3 = st.columns(3)
     m1.metric("แคมเปญทั้งหมด", len(df))

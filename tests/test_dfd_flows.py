@@ -32,6 +32,10 @@ def test_1_1_create_campaign(db):
     row = db("SELECT Employee_ID FROM CAMPAIGN WHERE Campaign_Name='แคมเปญเทส 1.1'")
     assert row and row[0][0] == "EMP002"
 
+    # Regression check: Ensure Tab 1 renders scatter plot cleanly with 0-lead campaign
+    at_view = _at("pages/1_marketing.py", "marketing")
+    assert not at_view.exception
+
 
 def test_1_2_lead_self_register_via_portal(db):
     before = db("SELECT COUNT(*) FROM LEAD")[0][0]
