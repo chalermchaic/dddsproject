@@ -14,11 +14,20 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import os
 import sqlite3
 import sys
 import zipfile
 from datetime import datetime
 from pathlib import Path
+
+os.environ.setdefault("PYTHONUTF8", "1")
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 PROJECT = "smart-crm-analytics"
 ROOT = Path(__file__).resolve().parent

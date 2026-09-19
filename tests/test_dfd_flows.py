@@ -192,3 +192,24 @@ def test_5_2_sales_summary_download():
     at = _at("pages/6_analytics_dashboard.py", "sales")
     assert not at.exception
     assert any("รายงาน" in (d.label or "") for d in at.get("download_button"))
+
+
+def test_5_3_service_health_view_no_fanout(db):
+    """Regression check: View V_SERVICE_HEALTH ต้องไม่เกิด fan-out จาก TICKET_MESSAGE"""
+    rows = db("""
+        SELECT v.Customer_ID, v.Ticket_Count, v.Critical_Tickets, v.Total_Messages,
+               (SELECT COUNT(*) FROM TICKET WHERE Customer_ID = v.Customer_ID) AS Actual_Tickets,
+               (SELECT SUM(CASE WHEN Problem_Category IN ('ระบบขัดข้อง','สินค้าชำรุด') THEN 1 ELSE 0 END)
+                FROM TICKET WHERE Customer_ID = v.Customer_ID) AS Actual_Critical,
+               (SELECT COUNT(m.Message_ID)
+                FROM TICKET t JOIN TICKET_MESSAGE m ON m.Ticket_ID = t.Ticket_ID
+                WHERE t.Customer_ID = v.Customer_ID) AS Actual_Messages
+        FROM V_SERVICE_HEALTH v
+        WHERE v.Ticket_Count > 0
+    """)
+    assert len(rows) > 0, "ต้องมีข้อมูลลูกค้าที่มี ticket"
+    for cid, t_cnt, crit_cnt, msg_cnt, act_t, act_crit, act_msg in rows:
+        assert t_cnt == act_t, f"{cid} Ticket_Count {t_cnt} != {act_t}"
+        assert crit_cnt == (act_crit or 0), f"{cid} Critical_Tickets {crit_cnt} != {act_crit}"
+        assert msg_cnt == act_msg, f"{cid} Total_Messages {msg_cnt} != {act_msg}"
+

@@ -3,8 +3,15 @@ Seed Data Generator — Smart CRM (SQLite)
 รัน: python db/seed_data.py
 ใช้เฉพาะ standard library + sqlite3 (ไม่ต้องลง Faker)
 """
-import sqlite3, random, os
+import sqlite3, random, os, sys
 from datetime import datetime, timedelta
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 random.seed(42)                       # reproducible
 DB_PATH     = "db/crm.db"

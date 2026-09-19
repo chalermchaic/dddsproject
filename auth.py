@@ -84,6 +84,22 @@ def build_navigation(role: str):
     return st.navigation(pages)
 
 
+def reset_database() -> bool:
+    """รีเซ็ตฐานข้อมูลเป็นสถานะเริ่มต้น (Seed Data) และล้าง cache ทั้งหมด"""
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.abspath(__file__))
+    try:
+        subprocess.run([sys.executable, "db/seed_data.py"], cwd=root, check=True,
+                       capture_output=True, env={**os.environ, "PYTHONUTF8": "1"})
+        st.cache_data.clear()
+        return True
+    except Exception as e:
+        st.error(f"เกิดข้อผิดพลาดในการรีเซ็ตฐานข้อมูล: {e}")
+        return False
+
+
 def render_login(app_version: str = "") -> None:
     """หน้า landing: เลือกบัญชีเพื่อเข้าสู่ระบบ"""
     st.title("📈 Smart CRM Analytics")
@@ -94,8 +110,9 @@ def render_login(app_version: str = "") -> None:
     try:
         df = list_logins()
     except FileNotFoundError:
-        st.error("ยังไม่มีฐานข้อมูล — รัน `python db/seed_data.py` ก่อน")
-        st.stop()
+        with st.spinner("🌱 กำลังเตรียมฐานข้อมูลเริ่มต้นสำหรับ Cloud..."):
+            reset_database()
+            df = list_logins()
 
     for role in ("admin", "marketing", "sales", "support"):
         sub = df[df.Role == role]
@@ -109,8 +126,8 @@ def render_login(app_version: str = "") -> None:
                 if st.button(f"เข้าใช้งานเป็น {r.Username}",
                              key=f"login_{r.Username}", use_container_width=True):
                     login(dict(employee_id=r.Employee_ID, username=r.Username,
-                               name=r.Employee_Name, role=r.Role,
-                               department=r.Department, position=r.Position))
+                                name=r.Employee_Name, role=r.Role,
+                                department=r.Department, position=r.Position))
                     st.rerun()
 
     st.divider()
@@ -122,6 +139,14 @@ def render_login(app_version: str = "") -> None:
         login(dict(GUEST_USER))
         st.rerun()
 
+    st.divider()
+    with st.expander("🛠️ เมนูสำหรับผู้สาธิต (Demo Tools & Data Reset)", expanded=False):
+        st.caption("คลิกปุ่มด้านล่างเพื่อคืนค่าข้อมูลตัวอย่างตั้งต้นทั้งหมด (`seed_data.py`) ให้พร้อมสำหรับการ Demo สดรอบใหม่:")
+        if st.button("🔄 รีเซ็ตฐานข้อมูล Demo (Reset Database)", key="login_reset_db", use_container_width=True):
+            if reset_database():
+                st.toast("✅ รีเซ็ตฐานข้อมูลเรียบร้อย พร้อมสำหรับ Demo!", icon="🌱")
+                st.rerun()
+
 
 def sidebar_userbox(app_version: str = "") -> None:
     u = current_user()
@@ -131,6 +156,12 @@ def sidebar_userbox(app_version: str = "") -> None:
         if st.button("ออกจากระบบ", use_container_width=True):
             logout()
             st.rerun()
+        with st.expander("🛠️ เมนูผู้สาธิต (Demo Tool)", expanded=False):
+            if st.button("🔄 รีเซ็ตฐานข้อมูล Demo", key="sidebar_reset_db", use_container_width=True):
+                if reset_database():
+                    st.toast("✅ รีเซ็ตฐานข้อมูลเรียบร้อย!", icon="🌱")
+                    st.rerun()
         st.divider()
         if app_version:
             st.caption(f"Smart CRM Analytics · เวอร์ชัน {app_version}")
+

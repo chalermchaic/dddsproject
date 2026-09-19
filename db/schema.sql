@@ -221,14 +221,25 @@ GROUP BY cu.Customer_ID;
 -- V3: ตัวชี้วัดสุขภาพลูกค้า (งานที่ 3)
 CREATE VIEW V_SERVICE_HEALTH AS
 SELECT  cu.Customer_ID,
-        COUNT(DISTINCT t.Ticket_ID) AS Ticket_Count,
-        SUM(CASE WHEN t.Problem_Category IN ('ระบบขัดข้อง','สินค้าชำรุด') THEN 1 ELSE 0 END) AS Critical_Tickets,
-        AVG(julianday(t.Closed_At) - julianday(t.Created_At)) AS Avg_Resolution_Days,
-        COUNT(m.Message_ID) AS Total_Messages
+        COALESCE(tk.Ticket_Count, 0)     AS Ticket_Count,
+        COALESCE(tk.Critical_Tickets, 0) AS Critical_Tickets,
+        tk.Avg_Resolution_Days,
+        COALESCE(msg.Total_Messages, 0)  AS Total_Messages
 FROM CUSTOMER cu
-LEFT JOIN TICKET t         ON t.Customer_ID = cu.Customer_ID
-LEFT JOIN TICKET_MESSAGE m ON m.Ticket_ID   = t.Ticket_ID
-GROUP BY cu.Customer_ID;
+LEFT JOIN (
+    SELECT Customer_ID,
+           COUNT(*) AS Ticket_Count,
+           SUM(CASE WHEN Problem_Category IN ('ระบบขัดข้อง','สินค้าชำรุด') THEN 1 ELSE 0 END) AS Critical_Tickets,
+           AVG(julianday(Closed_At) - julianday(Created_At)) AS Avg_Resolution_Days
+    FROM TICKET
+    GROUP BY Customer_ID
+) tk  ON tk.Customer_ID = cu.Customer_ID
+LEFT JOIN (
+    SELECT t.Customer_ID, COUNT(m.Message_ID) AS Total_Messages
+    FROM TICKET t JOIN TICKET_MESSAGE m ON m.Ticket_ID = t.Ticket_ID
+    GROUP BY t.Customer_ID
+) msg ON msg.Customer_ID = cu.Customer_ID;
+
 
 -- V4: ผลตอบแทนแคมเปญ (งานที่ 4)
 CREATE VIEW V_CAMPAIGN_ROI AS

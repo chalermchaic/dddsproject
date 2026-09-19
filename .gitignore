@@ -70,6 +70,43 @@ response*.md
 *.xlsx
 *.docx
 
+# Large Media & Video files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wmv
+*.flv
+*.mp3
+*.wav
+
+# Large Archive packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.gz
+*.bz2
+
+# Machine Learning weights & large data dumps
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.model
+*.bin
+*.pt
+*.pth
+*.onnx
+*.parquet
+*.feather
+*.arrow
+*.npy
+*.npz
+
 # Backups & temporary files
 *_backup.*
 *_original_backup.*
@@ -81,3 +118,4 @@ response*.md
 uploads/
 docs/evidence/
 test-results/
+
