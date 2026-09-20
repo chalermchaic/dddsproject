@@ -75,9 +75,9 @@ REQUIRED_TABLES = [
 ]
 
 # สิ่งที่ไม่แพ็กลง zip
-EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "venv", ".idea", ".vscode", ".claude"}
+EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "venv", ".idea", ".vscode", ".pytest_cache"}
 EXCLUDE_SUFFIX = {".zip", ".pyc", ".pyo"}
-EXCLUDE_NAMES = {"crm.db", "crm.db-wal", "crm.db-shm"}
+EXCLUDE_NAMES = {"crm.db", "crm.db-wal", "crm.db-shm", ".DS_Store"}
 
 
 def check_files() -> list[str]:
