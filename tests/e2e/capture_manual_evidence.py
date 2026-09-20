@@ -158,11 +158,20 @@ def run_capture():
             open_tab(page, "ค้นหา & บันทึกกิจกรรม")
             page.wait_for_timeout(1200)
 
-            # 1.3 ส่งโปรโมชัน
+            # 1.3 ส่งโปรโมชัน (เปิด expander Process 1.3 ก่อนกดส่ง)
+            expander = page.locator("details").filter(has_text="ส่งรายละเอียดโปรโมชัน")
+            if expander.count() > 0:
+                if expander.first.get_attribute("open") is None:
+                    expander.first.locator("summary").click()
+                    page.wait_for_timeout(800)
             promo_btn = page.get_by_role("button", name="ส่งข้อมูลโปรโมชัน")
             if promo_btn.count() > 0:
                 promo_btn.first.click()
-                page.wait_for_timeout(1000)
+                page.wait_for_timeout(1500)
+            # ตรวจสอบว่า expander ยังคงเปิดอยู่เพื่อให้เห็นฟอร์มและข้อความแจ้งผลลัพธ์
+            if expander.count() > 0 and expander.first.get_attribute("open") is None:
+                expander.first.locator("summary").click()
+                page.wait_for_timeout(600)
             shot(page, "1_3_promo_sent")
 
             # 2.2 (ก) ฟอร์มกรอกกิจกรรม
@@ -203,11 +212,13 @@ def run_capture():
 
             shot(page, "2_3_quotation_form")
 
-            # กดออกใบเสนอราคา
-            issue_q_btn = page.get_by_role("button", name="💾 ออกใบเสนอราคา")
+            # กดออกใบเสนอราคา (ปุ่มใน pages/3_order_billing.py คือ '🧾 ออกใบเสนอราคา')
+            issue_q_btn = page.get_by_role("button", name="🧾 ออกใบเสนอราคา").or_(
+                page.get_by_role("button", name="ออกใบเสนอราคา")
+            )
             if issue_q_btn.count() > 0:
-                issue_q_btn.click()
-                page.wait_for_timeout(1500)
+                issue_q_btn.first.click()
+                page.wait_for_timeout(2000)
             shot(page, "2_3_quotation_issued")
 
             # 3.1 ตรวจสอบคำสั่งซื้อ

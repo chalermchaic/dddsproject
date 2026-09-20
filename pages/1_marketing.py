@@ -15,21 +15,25 @@ tab1, tab2, tab3 = st.tabs(["📋 แคมเปญทั้งหมด", "➕
 # ---------------- แท็บ 1: รายการแคมเปญ ----------------
 with tab1:
     df = cached_query("""
-        SELECT c.Campaign_ID AS รหัส, c.Campaign_Name AS ชื่อแคมเปญ,
-               c.Discount_Rate AS 'ส่วนลด %', c.Budget_Cost AS งบประมาณ,
+        SELECT c.Campaign_ID, c.Campaign_Name AS ชื่อแคมเปญ,
+               c.Budget_Cost AS งบประมาณ, c.Discount_Rate AS ส่วนลด,
                c.Start_Date AS เริ่ม, c.End_Date AS สิ้นสุด,
                c.Campaign_Status AS สถานะ,
                COUNT(l.Lead_ID) AS ผู้สนใจ,
-               SUM(CASE WHEN l.Followup_Status='ปิดการขายสำเร็จ' THEN 1 ELSE 0 END) AS ปิดได้
+               COALESCE(SUM(CASE WHEN l.Followup_Status='ปิดการขายสำเร็จ' THEN 1 ELSE 0 END), 0) AS ปิดได้
         FROM CAMPAIGN c
         LEFT JOIN LEAD l ON l.Campaign_ID = c.Campaign_ID
         GROUP BY c.Campaign_ID ORDER BY c.Start_Date DESC
     """)
+    df["ปิดได้"] = df["ปิดได้"].fillna(0).astype(int)
+    df["ผู้สนใจ"] = df["ผู้สนใจ"].fillna(0).astype(int)
+    df["งบประมาณ"] = df["งบประมาณ"].fillna(0.0).astype(float)
     df["อัตราแปลง %"] = np.where(
         df["ผู้สนใจ"] > 0,
-        (100 * df["ปิดได้"] / df["ผู้สนใจ"]).round(1),
+        (100.0 * df["ปิดได้"] / df["ผู้สนใจ"]).round(1),
         0.0,
     )
+    df["อัตราแปลง %"] = df["อัตราแปลง %"].fillna(0.0).astype(float)
     df["ต้นทุน/ผู้สนใจ"] = np.where(
         df["ผู้สนใจ"] > 0,
         (df["งบประมาณ"] / df["ผู้สนใจ"]).round(0),

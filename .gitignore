@@ -119,3 +119,8 @@ uploads/
 docs/evidence/
 test-results/
 
+
+# Stray sync/WAL temp files
+.fuse_hidden*
+*.db-wal
+*.db-shm
