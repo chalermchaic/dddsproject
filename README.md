@@ -126,14 +126,32 @@ python -m playwright install chromium   # จำเป็นสำหรับ�
 
 สคริปต์อัตโนมัติสำหรับเปิดเบราว์เซอร์ Chromium จริงบนหน้าจอ แสดงการทำงานแบบก้าวหน้าทีละขั้นตอน (Slow-Mo) พร้อมคำบรรยาย Floating HUD Subtitle บนหัวเว็บ:
 
-* **🌟 Grand Tour 18 ขั้นตอนจัดเต็ม (แนะนำสำหรับการนำเสนอสมบูรณ์แบบ — 1.1 ก่อน 1.2 ครบทุกหน้าจอ):**
+* **📑 สไลด์นำเสนอ 3 เคสธุรกิจตามคู่มือ `crm-demo.pptx.pdf` (พร้อมบทพูดนำเสนอใน HUD):**
+  - **รันครบทั้ง 3 เคส (สไลด์ 3 – 17 รวม 15 ขั้นตอน):**
+    ```bash
+    python scripts/live_browser_demo.py --step --scenario slide
+    # หรือคำสั่งย่อ: python scripts/live_browser_demo.py -s -S slide
+    ```
+  - **แยกตามเคสธุรกิจ (เลือกเปิดเฉพาะช่วงที่ต้องการ):**
+    ```bash
+    # 📌 เคสที่ 1: Lead-to-Customer with AI (สไลด์ 3 – 9 รวม 7 ขั้นตอน)
+    python scripts/live_browser_demo.py --step --scenario case1
+
+    # 📌 เคสที่ 2: Support & 5-Star Rating (สไลด์ 10 – 12 รวม 3 ขั้นตอน)
+    python scripts/live_browser_demo.py --step --scenario case2
+
+    # 📌 เคสที่ 3: Executive Real-time 4 AI (สไลด์ 13 – 17 รวม 5 ขั้นตอน)
+    python scripts/live_browser_demo.py --step --scenario case3
+    ```
+
+* **🌟 Grand Tour 18 ขั้นตอนจัดเต็ม (เจาะลึก 1.1 ก่อน 1.2 ครบทุกหน้าจอระบบ):**
   ```bash
   python scripts/live_browser_demo.py --step --scenario full
   # หรือคำสั่งย่อ: python scripts/live_browser_demo.py -s --scenario grand
   ```
   *(ครอบคลุม DFD Process 1.0 – 5.0 ครบถ้วน: สร้างแคมเปญ ➔ ส่องแคมเปญ ➔ ลูกค้าลงทะเบียน ➔ ดูโปรโมชัน ➔ AI Lead Scoring ➔ บันทึกกิจกรรม ➔ ออกใบเสนอราคา ➔ ยืนยันคำสั่งซื้อ ➔ ตรวจคำสั่งซื้อ ➔ ตรวจสลิป ➔ ออกใบเสร็จ & ยกระดับสู่ CUSTOMER ➔ ลูกค้ารับใบเสร็จ ➔ ส่องข้อมูลลูกค้า 360° & RFM รายคน ➔ ลูกค้าเปิดเคสแจ้งปัญหา ➔ จนท. แชทสด & ปิดเคส ➔ ลูกค้าให้ 5 ดาว ➔ แดชบอร์ด 4 โมเดล Data Science ➔ รายงานสรุปยอดขาย & Export CSV)*
 
-* **📦 Standard Flow 7 ขั้นตอน (โหมดกระชับ 10 นาทีตามสไลด์):**
+* **📦 Standard Flow 7 ขั้นตอน (โหมดดั้งเดิม 10 นาที):**
   ```bash
   python scripts/live_browser_demo.py --step
   ```
@@ -141,8 +159,8 @@ python -m playwright install chromium   # จำเป็นสำหรับ�
 * **⚡ โหมดเล่นสดอัตโนมัติต่อเนื่อง (Auto Play ไม่ต้องกด Enter):**
   ```bash
   python scripts/live_browser_demo.py
-  # หรือเล่น Grand Tour อัตโนมัติ:
-  python scripts/live_browser_demo.py --scenario full --slow-mo 800
+  # หรือเล่นสไลด์ครบ 3 เคสอัตโนมัติ:
+  python scripts/live_browser_demo.py --scenario slide --slow-mo 800
   ```
 
 ### 4. รันชุดทดสอบทั้งหมด (Quick Commands)
