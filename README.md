@@ -1,7 +1,8 @@
 # 📈 Smart CRM Analytics
 
-**เวอร์ชัน 1.2.0** — ดูเลขล่าสุดที่ไฟล์ [`VERSION`](VERSION)
+**เวอร์ชัน 1.2.1** — ดูเลขล่าสุดที่ไฟล์ [`VERSION`](VERSION)
 
+- `1.2.1` — ปรับมาตรฐานชื่อไฟล์หน้าจอและ URL (ASCII snake_case + clean url_path) + เพิ่ม Unit Tests สูตรโมเดล Data Science ครบ 4 งาน + Real UI Playwright E2E ฟอร์มใบเสนอราคา (Process 2.3) + B-Tree Index Benchmark
 - `1.2.0` — ครอบคลุมกิจกรรม DFD ครบ 14 (Process 3.1/3.2/3.3 แยกขั้น, To-Do 2.1,
   ส่งโปรโมชัน 1.3, ประเมินผลบริการ 4.3, รายงานสรุปยอดขาย 5.2) + หน้า **Portal**
   จำลองผู้สนใจ/ลูกค้า + ชุดทดสอบ pytest/Playwright
@@ -85,7 +86,7 @@ python bootstrap.py              # แพ็กเป็น .zip สำหรั
 
 ---
 
-## ✅ ครอบคลุมกิจกรรม DFD ครบ 14 (v1.2.0)
+## ✅ ครอบคลุมกิจกรรม DFD ครบ 14 (v1.2.1)
 
 | Process | กิจกรรม | ทดลองที่ |
 | :--- | :--- | :--- |
