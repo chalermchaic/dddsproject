@@ -97,20 +97,68 @@ python bootstrap.py              # แพ็กเป็น .zip สำหรั
 | 4.1 / 4.2 / 4.3 | รับแจ้ง · แก้ไข · แจ้งผล+ประเมิน | 🎫 (Portal แจ้ง/ให้คะแนน) |
 | 5.1 / 5.2 | รายงานแคมเปญ · รายงานสรุปยอดขาย | 📊 แดชบอร์ด แท็บ 4 / 5 |
 
-### การทดสอบ
+---
+
+## 🧪 การทดสอบระบบ (Testing & Quality Assurance)
+
+ระบบได้รับการทดสอบครอบคลุมแบบหลายระดับ (Multi-layer Testing) รวมทั้งหมดมากกว่า 54 กรณีทดสอบ เพื่อรับประกันความถูกต้องของตรรกะ Machine Learning, โฟลว์การทำงานตาม Data Flow Diagram (DFD) ทุกกระบวนการ, การควบคุมสิทธิ์ (RBAC), และประสิทธิภาพของฐานข้อมูล
+
+### 1. ติดตั้งเครื่องมือทดสอบ (ครั้งแรก)
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
-python -m playwright install chromium
+pip install -r requirements-dev.txt
+python -m playwright install chromium   # จำเป็นสำหรับชุดทดสอบ Real UI E2E
+```
 
-make test        # ชั้น 1 (smoke) + ชั้น 2 (1 test/กิจกรรม, assert ที่ DB) — pytest, เร็ว
-make e2e         # ชั้น 3 — Playwright เดินผ่าน UI จริง
-make evidence    # ชั้น 3 + สร้าง docs/evidence/README.md (screenshot ทุกหน้า)
+### 2. วัตถุประสงค์และคำสั่งรันแต่ละชุดทดสอบ
+
+| ชุดทดสอบ | ไฟล์ที่ใช้ | วัตถุประสงค์ (ใช้ทำอะไร) | คำสั่งรัน |
+|---|---|---|---|
+| **Data Science Unit Tests** | `tests/test_analytics_units.py` | ตรวจสอบความถูกต้องของสูตรคำนวณและ edge cases ของโมเดลทั้ง 4 ตัว (RFM Quintiles, Customer Health Weights 100%, Lead Thresholds Hot/Warm/Cold, Chi-square p-value & ROI) โดยไม่ต้องพึ่งพาฐานข้อมูล | `pytest tests/test_analytics_units.py -v` |
+| **DFD Process Flows** | `tests/test_dfd_flows.py` | จำลองการทำงานตาม Data Flow Diagram ครบทุกกิจกรรม (Process 1.0 – 5.0) ผ่าน `AppTest` และ assert การเปลี่ยนแปลงในฐานข้อมูล SQLite จริง | `pytest tests/test_dfd_flows.py -v` |
+| **Live Demo Storyline** | `tests/test_demo_flow.py` | ทดสอบ Flow การสาธิตระบบสดครบ 7 ขั้นตอน (10 นาที) ตั้งแต่ลงทะเบียน, ติดตาม, ออกใบเสนอราคา, แนบสลิป, ออกใบเสร็จ, รับเรื่องปัญหา, จนถึงแดชบอร์ด | `pytest tests/test_demo_flow.py -v` |
+| **RBAC Security & Smoke** | `tests/test_smoke.py` | ตรวจสอบสิทธิ์การเข้าถึงเมนูและหน้าเพจตาม Role (Admin, Marketing, Sales, Support, Guest) ทุกคู่หน้า ป้องกันการเข้าถึงหน้าที่ไม่อนุญาต | `pytest tests/test_smoke.py -v` |
+| **Playwright Real UI E2E** | `tests/e2e/test_quotation_form_e2e.py` | ขับเบราว์เซอร์ Chromium จริงเพื่อทดสอบฟอร์มออกใบเสนอราคา (Process 2.3) เลือกสินค้าแบบ multiselect, ตรวจสอบการคำนวณส่วนลดอัตโนมัติบนหน้าจอ, และยืนยันการบันทึกสถานะ `ออกใบเสนอราคาแล้ว` ลงตาราง `SALE` | `pytest tests/e2e/test_quotation_form_e2e.py -v` |
+| **Index & Query Benchmark** | `scripts/benchmark_index_usage.py` | รัน `EXPLAIN QUERY PLAN` วิเคราะห์การทำงานของ B-Tree Index บน 7 Query หลักของระบบ และสรุปรายงานที่ `docs/INDEX_QUERY_PLAN_REPORT.md` | `python scripts/benchmark_index_usage.py` |
+
+### 3. รันชุดทดสอบทั้งหมด (Quick Commands)
+
+* **รันชุดทดสอบมาตรฐานทั้งหมด (53 เทสต์ — เร็ว ไม่เปิดเบราว์เซอร์):**
+  ```bash
+  pytest tests/ -v
+  # หรือใช้ Makefile:
+  make test
+  ```
+
+* **รันชุดทดสอบ E2E ทั้งหมดผ่าน Playwright เบราว์เซอร์จริง:**
+  ```bash
+  pytest tests/e2e -q --browser chromium
+  # หรือใช้ Makefile:
+  make e2e
+  ```
+
+* **บันทึกภาพหน้าจอหลักฐานการทำงานจริงอัตโนมัติ (Visual Evidence Capture):**
+  ```bash
+  python tests/e2e/capture_manual_evidence.py
+  python tests/e2e/build_report.py
+  # หรือใช้ Makefile:
+  make evidence
+  ```
+  *(ผลลัพธ์จะถูกบันทึกเป็นรูปภาพใน `docs/evidence/*.png` และสร้างเอกสาร `docs/evidence/README.md`)*
+
+### 4. ทดสอบรันและดูผลลัพธ์ชั้น Analytics เดี่ยวๆ (ไม่ต้องเปิดแอป)
+
+```bash
+python -m analytics.lead_scoring          # ทดสอบเทรน Random Forest & Logistic Regression
+python -m analytics.rfm_segmentation      # ทดสอบคำนวณ RFM Quintiles & K-Means
+python -m analytics.churn_health          # ทดสอบคำนวณ Health Score & Churn Probability
+python -m analytics.campaign_roi          # ทดสอบคำนวณ Funnel, ROI & Chi-square
+# หรือรันรวม: make analytics
 ```
 
 ---
 
-## 🧩 โครงสร้าง
+## 🧩 โครงสร้างโปรเจกต์
 
 ```
 app.py                     entry point / router — หน้า login + st.navigation ตาม role
@@ -133,18 +181,14 @@ pages/
   5_support_ticket.py      Process 5.0 — เคสแจ้งปัญหา + บทสนทนา
   6_analytics_dashboard.py แดชบอร์ดรวมผล Data Science ทั้ง 4 งาน
   9_portal.py              Portal จำลองสำหรับผู้สนใจและลูกค้า (External Entity)
-```
-
----
-
-## 🔬 ทดสอบชั้น analytics แยก (ไม่ต้องเปิดแอป)
-
-```bash
-python -m analytics.lead_scoring
-python -m analytics.rfm_segmentation
-python -m analytics.churn_health
-python -m analytics.campaign_roi
-# หรือ:  make test
+tests/
+  test_analytics_units.py  Unit test สูตรคำนวณ DS ทั้ง 4 โมเดล (9 tests)
+  test_dfd_flows.py        DFD flow ครบ Process 1.0 – 5.0 ผ่าน AppTest (16 tests)
+  test_demo_flow.py        Live Demo Storyline 7 ขั้นตอน (7 tests)
+  test_smoke.py            Smoke test & RBAC ทุกบทบาท (21 tests)
+  e2e/                     Playwright E2E เบราว์เซอร์จริง (Quotation form + Screenshots)
+scripts/
+  benchmark_index_usage.py สคริปต์รัน EXPLAIN QUERY PLAN ทดสอบ Index
 ```
 
 ---
@@ -156,6 +200,9 @@ python -m analytics.campaign_roi
 - [📊 Feature 2: Customer RFM Segmentation & K-Means Deep Dive](docs/feature2_rfm_segmentation_deep_dive.md)
 - [🩺 Feature 3: Customer Health Score & Churn Risk Deep Dive](docs/feature3_churn_health_score_deep_dive.md)
 - [💰 Feature 4: Campaign Performance & Marketing ROI Deep Dive](docs/feature4_campaign_roi_deep_dive.md)
+- [🧪 แผนและรายงานผลการทดสอบเพิ่มเติม (Additional Test Coverage Plan)](docs/TEST_PLAN_additional_coverage.md)
+- [⚡ รายงานผลการทดสอบ Query Plan และ Index Benchmark](docs/INDEX_QUERY_PLAN_REPORT.md)
+- [📸 หลักฐานภาพหน้าจอการทำงานจริงตาม DFD ครบทุกขั้นตอน](docs/evidence/README.md)
 
 ---
 
