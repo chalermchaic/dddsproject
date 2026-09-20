@@ -200,34 +200,62 @@ with tab4:
 
 # ---------------- ประวัติ ----------------
 with tab5:
+    my_sales_label = f"เฉพาะยอดขายของฉัน ({emp['name']})"
+    view_sales_mode = st.radio("มุมมองข้อมูลการขาย", ["รายการขายทั้งหมด", my_sales_label], horizontal=True)
+    is_my_sales = (view_sales_mode == my_sales_label)
+
+    where_filter = "s.Sale_Status='ปิดการขายสำเร็จ'"
+    if is_my_sales:
+        where_filter += f" AND s.Employee_ID='{emp['employee_id']}'"
+
+    my_summary = run_query(f"""
+        SELECT COUNT(*) AS total_bills,
+               COALESCE(SUM(Total_Amount), 0) AS total_revenue
+        FROM SALE s WHERE {where_filter}
+    """).iloc[0]
+
+    sm1, sm2 = st.columns(2)
+    sm1.metric("จำนวนบิลที่ปิดสำเร็จ", f"{int(my_summary.total_bills):,} บิล")
+    sm2.metric("ยอดขายสุทธิ", f"฿{my_summary.total_revenue:,.2f}")
+
     c1, c2 = st.columns(2)
     with c1:
         st.subheader("ยอดขายรายเดือน")
-        d = cached_query("""SELECT strftime('%Y-%m',Confirmed_At) AS เดือน,
-                                   SUM(Total_Amount) AS ยอดขาย
-                            FROM SALE WHERE Sale_Status='ปิดการขายสำเร็จ'
-                            GROUP BY เดือน ORDER BY เดือน""")
-        st.plotly_chart(px.bar(d, x="เดือน", y="ยอดขาย",
-                               color_discrete_sequence=["#2E7D32"]),
-                        use_container_width=True)
+        d = cached_query(f"""SELECT strftime('%Y-%m',Confirmed_At) AS เดือน,
+                                    SUM(Total_Amount) AS ยอดขาย
+                             FROM SALE s WHERE {where_filter}
+                             GROUP BY เดือน ORDER BY เดือน""")
+        if not d.empty:
+            st.plotly_chart(px.bar(d, x="เดือน", y="ยอดขาย",
+                                   color_discrete_sequence=["#2E7D32"]),
+                            use_container_width=True)
+        else:
+            st.info("ยังไม่มีข้อมูลยอดขายในมุมมองนี้")
     with c2:
         st.subheader("สินค้าขายดี (ตามรายได้)")
-        d = cached_query("""SELECT p.Product_Name AS สินค้า, SUM(d.Subtotal) AS รายได้
-                            FROM SALE_DETAIL d
-                            JOIN SALE s ON s.Sale_ID=d.Sale_ID
-                                       AND s.Sale_Status='ปิดการขายสำเร็จ'
-                            JOIN PRODUCT p ON p.Product_ID=d.Product_ID
-                            GROUP BY p.Product_ID ORDER BY รายได้ DESC""")
-        st.plotly_chart(px.bar(d.head(8), x="รายได้", y="สินค้า", orientation="h",
-                               color="รายได้", color_continuous_scale="Greens"),
-                        use_container_width=True)
+        d = cached_query(f"""SELECT p.Product_Name AS สินค้า, SUM(d.Subtotal) AS รายได้
+                             FROM SALE_DETAIL d
+                             JOIN SALE s ON s.Sale_ID=d.Sale_ID AND {where_filter}
+                             JOIN PRODUCT p ON p.Product_ID=d.Product_ID
+                             GROUP BY p.Product_ID ORDER BY รายได้ DESC""")
+        if not d.empty:
+            st.plotly_chart(px.bar(d.head(8), x="รายได้", y="สินค้า", orientation="h",
+                                   color="รายได้", color_continuous_scale="Greens"),
+                            use_container_width=True)
+        else:
+            st.info("ยังไม่มีข้อมูลสินค้าที่ขาย")
 
-    st.subheader("รายการขายทั้งหมด")
-    st.dataframe(cached_query("""
+    st.subheader("ตารางรายการขาย")
+    q_sales = f"""
         SELECT s.Sale_ID AS รหัส, s.Invoice_No AS เลขที่ใบแจ้งหนี้,
-               l.Full_Name AS ลูกค้า, s.Total_Amount AS ยอดรวม,
-               s.Sale_Status AS สถานะ, s.Confirmed_At AS ยืนยันเมื่อ
-        FROM SALE s JOIN LEAD l ON l.Lead_ID=s.Lead_ID
-        ORDER BY s.Quotation_Date DESC LIMIT 300"""),
+               l.Full_Name AS ลูกค้า, e.Employee_Name AS พนักงานขาย,
+               s.Total_Amount AS ยอดรวม, s.Sale_Status AS สถานะ, s.Confirmed_At AS ยืนยันเมื่อ
+        FROM SALE s 
+        JOIN LEAD l ON l.Lead_ID=s.Lead_ID
+        JOIN EMPLOYEE e ON e.Employee_ID=s.Employee_ID
+        {"WHERE s.Employee_ID='" + emp["employee_id"] + "'" if is_my_sales else ""}
+        ORDER BY s.Quotation_Date DESC LIMIT 300
+    """
+    st.dataframe(run_query(q_sales),
         use_container_width=True, hide_index=True, height=350,
         column_config={"ยอดรวม": st.column_config.NumberColumn(format="฿%.2f")})

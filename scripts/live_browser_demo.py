@@ -403,7 +403,7 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 3, total_steps,
         "Portal: ผู้สนใจลงทะเบียนขอข้อมูล (Process 1.2 -> ตาราง D1: LEAD)",
-        "ผู้สนใจภายนอกเห็นสื่อโฆษณา จึงเข้ามาลงทะเบียนผ่าน Customer Portal พร้อมเลือกแคมเปญโปรโมชันครับ",
+        "ผู้สนใจภายนอก 'คุณสมชาย หมายมั่น' เห็นโฆษณา จึงลงทะเบียนผ่าน Customer Portal พร้อมเลือกรับแคมเปญโปรโมชันครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
@@ -418,62 +418,98 @@ def run_grand_tour(page, base_url: str, args):
     if sub_r.is_visible():
         sub_r.click()
         page.wait_for_timeout(1500)
-    print("    ✅ บันทึก Lead ใหม่: คุณสมชาย หมายมั่น เข้าตาราง D1: LEAD สำเร็จ")
+    print("    ✅ บันทึก Lead ใหม่: 'คุณสมชาย หมายมั่น' เข้าตาราง D1: LEAD สำเร็จ")
 
     # 4. Process 1.3: Portal ลูกค้าเปิดดูโปรโมชันที่ได้รับ
     wait_next_step(
         page, 4, total_steps,
         "Portal: ตรวจสอบโปรโมชันและส่วนลดที่ได้รับ (Process 1.3)",
-        "ลูกค้าเข้ามาดูสิทธิประโยชน์และโปรโมชันที่ผูกไว้กับแคมเปญการตลาดครับ",
+        "คุณสมชายเลือกตัวตนของตนเองใน Portal เพื่อดูสิทธิประโยชน์และส่วนลด 15% ที่ได้รับจากแคมเปญครับ",
         args.interactive, args.pause
     )
     set_hud(page, f"ขั้นตอนที่ 4/{total_steps}", "Portal: โปรโมชันที่ได้รับ", "แสดงผลรายละเอียดโปรโมชันและส่วนลดที่ได้รับตามแคมเปญ (Process 1.3)")
+    # เลือกตัวตนคุณสมชายใน Portal
+    p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
+    if p_sel.count() > 0 and p_sel.is_visible():
+        p_sel.click()
+        page.wait_for_timeout(500)
+        p_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if p_opt.count() > 0:
+            p_opt.click()
+        else:
+            p_first = page.locator("li[role='option']").nth(1)
+            if p_first.count() > 0:
+                p_first.click()
+        page.wait_for_timeout(800)
+
     click_tab(page, "โปรโมชัน & ใบเสนอราคา", args.pause)
     time.sleep(args.pause)
-    print("    ✅ ลูกค้าตรวจสอบโปรโมชันและส่วนลดเรียบร้อย")
+    print("    ✅ คุณสมชาย หมายมั่น ตรวจสอบโปรโมชันและส่วนลดเรียบร้อย")
 
     # 5. Process 2.1: Sales คิวงาน AI Lead Scoring
     wait_next_step(
         page, 5, total_steps,
         "Sales: ตรวจสอบคิวงานจัดลำดับด้วย AI (Process 2.1 -> ML Lead Scoring)",
-        "ฝ่ายขายใช้ Random Forest คัดกรองคิวงาน พบว่าคุณวิชัย LD0264 มีโอกาสซื้อสูงถึง 85% (Hot Lead) ครับ",
+        "ฝ่ายขาย (sale1 ณัฐวุฒิ) ใช้โมเดลคัดกรองคิวงาน และตรวจพบคิวงานผู้สนใจใหม่ 'คุณสมชาย หมายมั่น' ครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "sale1", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 5/{total_steps}", "Sales: คิวงาน AI Lead Scoring", "Random Forest คัดกรอง Hot Lead LD0264 โอกาสปิดการขาย 85% (Process 2.1)")
+    set_hud(page, f"ขั้นตอนที่ 5/{total_steps}", "Sales: คิวงาน AI Lead Scoring", "ฝ่ายขายตรวจสอบคิวงาน AI และคิวติดตามประจำวัน (Process 2.1)")
     click_menu(page, "ติดตามการขาย", args.pause)
     click_tab(page, "คิวงานจัดลำดับด้วย AI", args.pause)
     time.sleep(args.pause)
-    print("    ✅ ตรวจสอบ Hot Lead รหัส LD0264 (นายวิชัย ทองดี)")
+    click_tab(page, "คิวติดตามวันนี้", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ ฝ่ายขายตรวจสอบคิวงานและตรวจพบ 'คุณสมชาย หมายมั่น'")
 
     # 6. Process 2.2: Sales บันทึกผลการติดต่อ & ไทม์ไลน์
     wait_next_step(
         page, 6, total_steps,
         "Sales: บันทึกผลการติดต่อ & ดูประวัติไทม์ไลน์ (Process 2.2 -> D2: LEAD_ACTIVITY)",
-        "ฝ่ายขายโทรติดต่อ นำเสนอโซลูชัน และบันทึกประวัติการปฏิสัมพันธ์ลงตาราง D2 ครับ",
+        "ฝ่ายขายโทรติดต่อ 'คุณสมชาย หมายมั่น' นำเสนอแพ็กเกจ Cloud ERP และบันทึกผลการโทรลงระบบครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 6/{total_steps}", "Sales: บันทึกผลการติดต่อ", "บันทึกผลการโทรคุย และตรวจสอบประวัติไทม์ไลน์ (Process 2.2 -> D2: LEAD_ACTIVITY)")
+    set_hud(page, f"ขั้นตอนที่ 6/{total_steps}", "Sales: บันทึกผลการติดต่อ", "บันทึกผลการโทรคุยกับคุณสมชาย และตรวจสอบประวัติไทม์ไลน์ (Process 2.2 -> D2)")
     click_tab(page, "ค้นหา & บันทึกกิจกรรม", args.pause)
+    # เลือกคุณสมชายใน dropdown ผู้สนใจ
+    lead_s = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกผู้สนใจ").first
+    if lead_s.count() > 0 and lead_s.is_visible():
+        lead_s.click()
+        page.wait_for_timeout(500)
+        l_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if l_opt.count() > 0:
+            l_opt.click()
+        page.wait_for_timeout(800)
+
     act_n = page.get_by_label("บันทึกผลการติดต่อ")
     if act_n.is_visible():
-        act_n.fill("โทรนำเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับข้อเสนอใบเสนอราคา")
+        act_n.fill("โทรนำเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับข้อเสนอใบเสนอราคาพร้อมส่วนลด 15%")
     s_act = page.get_by_role("button", name=re.compile("บันทึก")).first
     if s_act.is_visible():
         s_act.click()
         page.wait_for_timeout(1200)
-    print("    ✅ บันทึกกิจกรรมและอัปเดตไทม์ไลน์เรียบร้อย")
+    print("    ✅ บันทึกกิจกรรมโทรคุยกับคุณสมชาย และอัปเดตไทม์ไลน์ D2 เรียบร้อย")
 
     # 7. Process 2.3: Sales ออกใบเสนอราคา
     wait_next_step(
         page, 7, total_steps,
         "Sales: ออกใบเสนอราคา (Quotation) (Process 2.3 -> D3: SALE & SALE_DETAIL)",
-        "ฝ่ายขายออกใบเสนอราคา โดยเลือกสินค้าหลายรายการ ระบบหักลดส่วนลดแคมเปญอัตโนมัติครับ",
+        "ฝ่ายขายออกใบเสนอราคาให้ 'คุณสมชาย หมายมั่น' โดยเลือกสินค้าหลายรายการ ระบบหักลดส่วนลดแคมเปญอัตโนมัติครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 7/{total_steps}", "Sales: ออกใบเสนอราคา", "เลือกสินค้าแบบ Multiselect คำนวณส่วนลดอัตโนมัติ ออกเลขที่ QT (Process 2.3 -> D3)")
+    set_hud(page, f"ขั้นตอนที่ 7/{total_steps}", "Sales: ออกใบเสนอราคา", "เลือกคุณสมชาย หมายมั่น และสินค้าแบบ Multiselect ออกเลขที่ QT (Process 2.3 -> D3)")
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "ออกใบเสนอราคา", args.pause)
+    # เลือกคุณสมชายใน dropdown ผู้สนใจ
+    q_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกผู้สนใจ").first
+    if q_sel.count() > 0 and q_sel.is_visible():
+        q_sel.click()
+        page.wait_for_timeout(500)
+        q_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if q_opt.count() > 0:
+            q_opt.click()
+            page.wait_for_timeout(600)
+
     ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
     if not ms.is_visible():
         ms = page.locator("div[data-testid='stMultiSelect']").first
@@ -501,11 +537,21 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 8, total_steps,
         "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (Process 3.1 -> D3: SALE)",
-        "ลูกค้าตรวจสอบความถูกต้องของรายการและยอดเงิน แล้วกดยืนยันคำสั่งซื้อผ่าน Portal ครับ",
+        "คุณสมชายตรวจสอบความถูกต้องของรายการและยอดเงิน แล้วกดยืนยันคำสั่งซื้อผ่าน Portal ครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 8/{total_steps}", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค้ายืนยันสั่งซื้อสินค้าตามใบเสนอราคาแบบ Self-service (Process 3.1)")
+    set_hud(page, f"ขั้นตอนที่ 8/{total_steps}", "Portal: ยืนยันคำสั่งซื้อ", "คุณสมชายยืนยันสั่งซื้อสินค้าตามใบเสนอราคาแบบ Self-service (Process 3.1)")
+    # เลือกตัวตนคุณสมชายใน Portal
+    p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
+    if p_sel.count() > 0 and p_sel.is_visible():
+        p_sel.click()
+        page.wait_for_timeout(500)
+        p_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if p_opt.count() > 0:
+            p_opt.click()
+            page.wait_for_timeout(800)
+
     click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
     c_btn = page.get_by_role("button", name=re.compile("ยืนยันสั่งซื้อ")).first
     if c_btn.is_visible():
@@ -519,11 +565,11 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 9, total_steps,
         "Sales: ตรวจสอบคำสั่งซื้อของลูกค้า (Process 3.1)",
-        "ฝ่ายขายตรวจรับคำสั่งซื้อที่ลูกค้ายืนยันเข้ามา เพื่อส่งต่อไปยังขั้นตอนการชำระเงินครับ",
+        "ฝ่ายขายตรวจรับคำสั่งซื้อที่คุณสมชายยืนยันเข้ามา เพื่อส่งต่อไปยังขั้นตอนการชำระเงินครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "sale1", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 9/{total_steps}", "Sales: ตรวจรับคำสั่งซื้อ", "ฝ่ายขายตรวจสอบรายการและส่งต่อไปยังขั้นตอนชำระเงิน (Process 3.1)")
+    set_hud(page, f"ขั้นตอนที่ 9/{total_steps}", "Sales: ตรวจรับคำสั่งซื้อ", "ฝ่ายขายตรวจสอบรายการสั่งซื้อของคุณสมชาย (Process 3.1)")
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
     time.sleep(args.pause)
@@ -540,7 +586,7 @@ def run_grand_tour(page, base_url: str, args):
         "ฝ่ายขายตรวจหลักฐานการโอนเงิน บันทึกรหัสอ้างอิงธุรกรรมธนาคารและยืนยันรับเงินครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 10/{total_steps}", "Sales: ตรวจสอบการชำระเงิน", "ตรวจสอบหลักฐานสลิปโอนเงิน บันทึกเลขอ้างอิงธนาคาร (Process 3.2 -> D3: SALE)")
+    set_hud(page, f"ขั้นตอนที่ 10/{total_steps}", "Sales: ตรวจสอบการชำระเงิน", "ตรวจสอบหลักฐานการโอนเงิน บันทึกเลขอ้างอิงธนาคาร (Process 3.2 -> D3: SALE)")
     click_tab(page, "ตรวจสอบการชำระเงิน", args.pause)
     time.sleep(args.pause)
     ref_b = page.get_by_label(re.compile("เลขอ้างอิง")).first
@@ -556,26 +602,36 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 11, total_steps,
         "Sales: ออกใบเสร็จรับเงิน & ยกระดับสู่ CUSTOMER (Process 3.3 -> D4: CUSTOMER)",
-        "ระบบปิดการขาย ออกใบเสร็จรับเงิน และยกระดับสถานะจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
+        "ระบบปิดการขาย ออกใบเสร็จรับเงิน และยกระดับสถานะคุณสมชายจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 11/{total_steps}", "Sales: ออกใบเสร็จ & ยกระดับลูกค้า", "ออกใบเสร็จรับเงิน และยกระดับจาก Lead เข้าสู่ตาราง D4: CUSTOMER (Process 3.3)")
+    set_hud(page, f"ขั้นตอนที่ 11/{total_steps}", "Sales: ออกใบเสร็จ & ยกระดับลูกค้า", "ออกใบเสร็จรับเงิน และยกระดับคุณสมชายเข้าสู่ตาราง D4: CUSTOMER (Process 3.3)")
     click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
     r_btn = page.get_by_role("button", name=re.compile("ออกใบเสร็จ")).first
     if r_btn.count() > 0 and r_btn.is_visible():
         r_btn.click()
         page.wait_for_timeout(1500)
-    print("    ✅ ยกระดับข้อมูลเป็น CUSTOMER และสร้างใบเสร็จรับเงินเรียบร้อย")
+    print("    ✅ ยกระดับข้อมูลคุณสมชายเป็น CUSTOMER และสร้างใบเสร็จรับเงินเรียบร้อย")
 
     # 12. Process 3.3: Portal ลูกค้าเปิดดูใบเสร็จ
     wait_next_step(
         page, 12, total_steps,
         "Portal: ลูกค้าเปิดดูใบเสร็จรับเงินอิเล็กทรอนิกส์ (Process 3.3)",
-        "ลูกค้าสามารถเปิดดูและดาวน์โหลดใบเสร็จรับเงินอิเล็กทรอนิกส์ผ่านระบบ Portal ได้ทันทีครับ",
+        "คุณสมชายสามารถเปิดดูและดาวน์โหลดใบเสร็จรับเงินอิเล็กทรอนิกส์ผ่านระบบ Portal ได้ทันทีครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 12/{total_steps}", "Portal: ใบเสร็จรับเงินอิเล็กทรอนิกส์", "ลูกค้าเปิดดูและดาวน์โหลดใบเสร็จรับเงิน (Process 3.3)")
+    set_hud(page, f"ขั้นตอนที่ 12/{total_steps}", "Portal: ใบเสร็จรับเงินอิเล็กทรอนิกส์", "คุณสมชายเปิดดูและดาวน์โหลดใบเสร็จรับเงิน (Process 3.3)")
+    # เลือกตัวตนคุณสมชาย
+    p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
+    if p_sel.count() > 0 and p_sel.is_visible():
+        p_sel.click()
+        page.wait_for_timeout(500)
+        p_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if p_opt.count() > 0:
+            p_opt.click()
+            page.wait_for_timeout(800)
+
     click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
     time.sleep(args.pause)
     print("    ✅ แสดงผลใบเสร็จรับเงินอิเล็กทรอนิกส์พร้อมดาวน์โหลด")
@@ -584,77 +640,116 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 13, total_steps,
         "Customer 360: ส่องโปรไฟล์ลูกค้า 360 องศา & RFM รายบุคคล (Process 4.0)",
-        "พาชมหน้าข้อมูลลูกค้า ดูประวัติบริษัท เลขผู้เสียภาษี และดัชนี RFM Tier รายบุคคลครับ",
+        "พาชมหน้าข้อมูลลูกค้า ดูประวัติบริษัท เลขผู้เสียภาษี และดัชนี RFM Tier รายบุคคลของคุณสมชายครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "sale1", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 13/{total_steps}", "Customer 360: โปรไฟล์ลูกค้า", "ส่องโปรไฟล์ลูกค้า 360 องศา ดูเลขภาษี ที่อยู่ และ RFM Tier รายบุคคล (Process 4.0)")
+    set_hud(page, f"ขั้นตอนที่ 13/{total_steps}", "Customer 360: โปรไฟล์ลูกค้า", "ส่องโปรไฟล์คุณสมชาย 360 องศา ดูเลขภาษี ที่อยู่ และ RFM Tier รายบุคคล (Process 4.0)")
     click_menu(page, "ข้อมูลลูกค้า", args.pause)
     click_tab(page, "โปรไฟล์รายบุคคล", args.pause)
+    # เลือกลูกค้า คุณสมชาย หมายมั่น
+    c_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกลูกค้า").first
+    if c_sel.count() > 0 and c_sel.is_visible():
+        c_sel.click()
+        page.wait_for_timeout(500)
+        c_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if c_opt.count() > 0:
+            c_opt.click()
+            page.wait_for_timeout(800)
     time.sleep(args.pause * 1.5)
-    print("    ✅ ส่องโปรไฟล์ลูกค้า 360 องศา และคะแนน RFM รายบุคคล")
+    print("    ✅ ส่องโปรไฟล์คุณสมชาย 360 องศา และคะแนน RFM รายบุคคล")
 
     # 14. Process 4.1: Portal ลูกค้าเปิดเคสแจ้งปัญหาเอง
     wait_next_step(
         page, 14, total_steps,
         "Portal: ลูกค้าเปิดเคสแจ้งปัญหาการใช้งาน (Process 4.1 -> D4: TICKET)",
-        "จำลองลูกค้าเปิดเคสแจ้งขอคำปรึกษาผ่าน Customer Portal ข้อมูลไหลเข้าสู่ตาราง D4 ทันทีครับ",
+        "คุณสมชายเปิดเคสแจ้งขอคำปรึกษา API ผ่าน Customer Portal ข้อมูลไหลเข้าสู่ตาราง D4 ทันทีครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 14/{total_steps}", "Portal: ลูกค้าแจ้งปัญหาการใช้งาน", "ลูกค้าเปิดเคสแจ้งปัญหาผ่าน Portal (Process 4.1 -> ตาราง D4: TICKET)")
+    set_hud(page, f"ขั้นตอนที่ 14/{total_steps}", "Portal: ลูกค้าแจ้งปัญหาการใช้งาน", "คุณสมชายเปิดเคสแจ้งปัญหาผ่าน Portal (Process 4.1 -> ตาราง D4: TICKET)")
+    # เลือกตัวตนคุณสมชาย
+    p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
+    if p_sel.count() > 0 and p_sel.is_visible():
+        p_sel.click()
+        page.wait_for_timeout(500)
+        p_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if p_opt.count() > 0:
+            p_opt.click()
+            page.wait_for_timeout(800)
+
     click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
     tk_t = page.get_by_label(re.compile("หัวข้อปัญหา")).first
     if tk_t.count() > 0 and tk_t.is_visible():
         tk_t.fill("ขอคำปรึกษาการเชื่อมโยงระบบฐานข้อมูลและ API ยอดขาย")
     tk_d = page.get_by_label(re.compile("รายละเอียด")).first
     if tk_d.count() > 0 and tk_d.is_visible():
-        tk_d.fill("ต้องการเอกสาร API เพิ่มเติมสำหรับทีมวิศวกร")
+        tk_d.fill("ต้องการเอกสาร API เพิ่มเติมสำหรับทีมวิศวกรของคุณสมชาย")
     s_tk = page.get_by_role("button", name=re.compile("ส่งเรื่องแจ้งปัญหา")).first
     if s_tk.count() > 0 and s_tk.is_visible():
         s_tk.click()
         page.wait_for_timeout(1500)
-    print("    ✅ ส่งเรื่องแจ้งปัญหาผ่าน Portal เรียบร้อย")
+    print("    ✅ ส่งเรื่องแจ้งปัญหาของคุณสมชายผ่าน Portal เรียบร้อย")
 
     # 15. Process 4.2: Support แชทสดสองทาง & ปิดเคส
     wait_next_step(
         page, 15, total_steps,
         "Support: แชทสดสองทาง & ปิดเคสปัญหา (Process 4.2 -> D4: TICKET_MESSAGE)",
-        "เจ้าหน้าที่บริการลูกค้าพิมพ์แชทสดตอบกลับลูกค้า มอบหมายผู้รับผิดชอบ และอัปเดตปิดเคสครับ",
+        "เจ้าหน้าที่บริการลูกค้า (cs1) พิมพ์แชทสดตอบกลับคุณสมชาย มอบหมายผู้รับผิดชอบ และอัปเดตปิดเคสครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "cs1", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 15/{total_steps}", "Support: แชทสดแก้ไขปัญหา & ปิดเคส", "เจ้าหน้าที่ Support แชทตอบลูกค้า และกดปิดเคสสำเร็จ (Process 4.2)")
+    set_hud(page, f"ขั้นตอนที่ 15/{total_steps}", "Support: แชทสดแก้ไขปัญหา & ปิดเคส", "เจ้าหน้าที่ Support แชทตอบคุณสมชาย และกดปิดเคสสำเร็จ (Process 4.2)")
     click_menu(page, "รับแจ้งปัญหา", args.pause)
     click_tab(page, "คิวเคส & สนทนา", args.pause)
+    # เลือกเคสของคุณสมชายใน selectbox
+    t_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกเคสเพื่อดูบทสนทนา").first
+    if t_sel.count() > 0 and t_sel.is_visible():
+        t_sel.click()
+        page.wait_for_timeout(500)
+        t_opt = page.locator("li[role='option']").filter(has_text="ขอคำปรึกษาการเชื่อมโยงระบบฐานข้อมูล").first
+        if t_opt.count() > 0:
+            t_opt.click()
+            page.wait_for_timeout(800)
+
     c_inp = page.get_by_placeholder(re.compile("พิมพ์ข้อความตอบกลับ")).or_(
         page.locator("[data-testid='stChatInputTextArea']")
     ).first
     if c_inp.is_visible():
-        c_inp.fill("ทีมวิศวกรได้จัดส่งเอกสาร API และตัวอย่างโค้ดเชื่อมโยงฐานข้อมูลให้ทางอีเมลเรียบร้อยแล้วครับ")
+        c_inp.fill("สวัสดีครับคุณสมชาย ทีมวิศวกรได้ส่งเอกสาร API และตัวอย่างโค้ดให้ทางอีเมลเรียบร้อยแล้วครับ")
         c_inp.press("Enter")
         page.wait_for_timeout(1500)
     u_btn = page.get_by_role("button", name=re.compile("อัปเดต")).first
     if u_btn.is_visible():
         u_btn.click()
         page.wait_for_timeout(1500)
-    print("    ✅ แชทสดสองทางและอัปเดตสถานะเคสบริการสำเร็จ")
+    print("    ✅ แชทสดสองทางและอัปเดตสถานะเคสบริการของคุณสมชายสำเร็จ")
 
     # 16. Process 4.3: Portal ลูกค้าประเมิน 5 ดาว (CSAT)
     wait_next_step(
         page, 16, total_steps,
         "Portal: ลูกค้าประเมินความพึงพอใจ 5 ดาว (Process 4.3 -> CSAT & Health Score)",
-        "ลูกค้าประเมินคะแนนบริการ 5 ดาว ซึ่งคะแนนนี้จะส่งผลบวกต่อ Customer Health Score ครับ",
+        "คุณสมชายประเมินคะแนนบริการ 5 ดาว ซึ่งคะแนนนี้จะส่งผลบวกต่อ Customer Health Score ครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 16/{total_steps}", "Portal: ประเมินความพึงพอใจ 5 ดาว", "ลูกค้าประเมินคะแนน CSAT 5 ดาว ส่งผลบวกต่อ Customer Health Score (Process 4.3)")
+    set_hud(page, f"ขั้นตอนที่ 16/{total_steps}", "Portal: ประเมินความพึงพอใจ 5 ดาว", "คุณสมชายประเมินคะแนน CSAT 5 ดาว ส่งผลบวกต่อ Customer Health Score (Process 4.3)")
+    # เลือกตัวตนคุณสมชาย
+    p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
+    if p_sel.count() > 0 and p_sel.is_visible():
+        p_sel.click()
+        page.wait_for_timeout(500)
+        p_opt = page.locator("li[role='option']").filter(has_text="คุณสมชาย หมายมั่น").first
+        if p_opt.count() > 0:
+            p_opt.click()
+            page.wait_for_timeout(800)
+
     click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
     rt_btn = page.get_by_role("button", name=re.compile("ส่งคะแนน")).first
     if rt_btn.is_visible():
         rt_btn.click()
         page.wait_for_timeout(1200)
-    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ เข้าระบบสำเร็จ")
+    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ ของคุณสมชายเข้าระบบสำเร็จ")
 
     # 17. Process 5.1: แดชบอร์ดวิเคราะห์ 4 โมเดล Data Science
     wait_next_step(
