@@ -124,19 +124,25 @@ python -m playwright install chromium   # จำเป็นสำหรับ�
 
 ### 3. รันการสาธิตระบบสดผ่านเบราว์เซอร์จริง (Real UI Live Demo)
 
-สคริปต์อัตโนมัติสำหรับเปิดเบราว์เซอร์ Chromium จริงบนหน้าจอ แสดงการทำงานแบบก้าวหน้าทีละขั้นตอน (Slow-Mo) พร้อมคำบรรยาย Floating HUD Subtitle บนหัวเว็บ ครอบคลุมทั้ง 3 เคสธุรกิจ 7 ขั้นตอน (DFD Process 1.0 - 5.0, D1 - D5):
+สคริปต์อัตโนมัติสำหรับเปิดเบราว์เซอร์ Chromium จริงบนหน้าจอ แสดงการทำงานแบบก้าวหน้าทีละขั้นตอน (Slow-Mo) พร้อมคำบรรยาย Floating HUD Subtitle บนหัวเว็บ:
 
-* **โหมดสั่ง Next ทีละสเต็ป (Interactive Step-by-Step — แนะนำสำหรับการนำเสนอสด):**
+* **🌟 Grand Tour 18 ขั้นตอนจัดเต็ม (แนะนำสำหรับการนำเสนอสมบูรณ์แบบ — 1.1 ก่อน 1.2 ครบทุกหน้าจอ):**
+  ```bash
+  python scripts/live_browser_demo.py --step --scenario full
+  # หรือคำสั่งย่อ: python scripts/live_browser_demo.py -s --scenario grand
+  ```
+  *(ครอบคลุม DFD Process 1.0 – 5.0 ครบถ้วน: สร้างแคมเปญ ➔ ส่องแคมเปญ ➔ ลูกค้าลงทะเบียน ➔ ดูโปรโมชัน ➔ AI Lead Scoring ➔ บันทึกกิจกรรม ➔ ออกใบเสนอราคา ➔ ยืนยันคำสั่งซื้อ ➔ ตรวจคำสั่งซื้อ ➔ ตรวจสลิป ➔ ออกใบเสร็จ & ยกระดับสู่ CUSTOMER ➔ ลูกค้ารับใบเสร็จ ➔ ส่องข้อมูลลูกค้า 360° & RFM รายคน ➔ ลูกค้าเปิดเคสแจ้งปัญหา ➔ จนท. แชทสด & ปิดเคส ➔ ลูกค้าให้ 5 ดาว ➔ แดชบอร์ด 4 โมเดล Data Science ➔ รายงานสรุปยอดขาย & Export CSV)*
+
+* **📦 Standard Flow 7 ขั้นตอน (โหมดกระชับ 10 นาทีตามสไลด์):**
   ```bash
   python scripts/live_browser_demo.py --step
   ```
-  *(ระบบจะหยุดรอให้ผู้กด `[Enter]` ใน Terminal ก่อนเริ่มดำเนินการในแต่ละขั้นตอน พร้อมแสดงบทพูดแนะนำสำหรับบรรยายให้อาจารย์ฟัง)*
 
-* **โหมดเล่นสดอัตโนมัติต่อเนื่อง (Auto Play Mode):**
+* **⚡ โหมดเล่นสดอัตโนมัติต่อเนื่อง (Auto Play ไม่ต้องกด Enter):**
   ```bash
   python scripts/live_browser_demo.py
-  # ปรับความเร็วได้ตามต้องการ เช่น:
-  python scripts/live_browser_demo.py --slow-mo 800 --pause 1.0
+  # หรือเล่น Grand Tour อัตโนมัติ:
+  python scripts/live_browser_demo.py --scenario full --slow-mo 800
   ```
 
 ### 4. รันชุดทดสอบทั้งหมด (Quick Commands)

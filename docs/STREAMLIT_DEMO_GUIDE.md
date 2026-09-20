@@ -161,12 +161,16 @@ python tests/test_demo_flow.py
 
 ### 4.4 ผู้ช่วยขับเบราว์เซอร์อัตโนมัติ (Live Browser Demo Script):
 หากต้องการให้ระบบเปิดหน้าต่างเบราว์เซอร์จริงขึ้นมาสาธิตให้ดู หรือต้องการให้ระบบขับเคลื่อนหน้าจอทีละสเต็ปตามที่คุณกดสั่ง:
-* **สั่ง Next ทีละสเต็ปด้วยตนเอง (Interactive Mode — แนะนำสำหรับการนำเสนอ):**
+* **🌟 Grand Tour 18 ขั้นตอนจัดเต็ม (แนะนำสำหรับการนำเสนอสมบูรณ์แบบ — 1.1 ก่อน 1.2):**
+  ```powershell
+  python scripts/live_browser_demo.py --step --scenario full
+  ```
+  *(ระบบจะหยุดรอให้กด `[Enter]` ก่อนเริ่มทำแต่ละขั้นตอน พร้อมแสดงบทพูดแนะนำสำหรับบรรยายใน Terminal)*
+* **📦 Standard Flow 7 ขั้นตอน (โหมดกระชับ 10 นาทีตามสไลด์):**
   ```powershell
   python scripts/live_browser_demo.py --step
   ```
-  *(ระบบจะหยุดรอให้คุณกด `[Enter]` ก่อนเริ่มทำแต่ละขั้นตอน พร้อมแสดงบทพูดแนะนำใน Terminal)*
-* **เล่นสดอัตโนมัติต่อเนื่อง (Auto Play):**
+* **⚡ เล่นสดอัตโนมัติต่อเนื่อง (Auto Play):**
   ```powershell
-  python scripts/live_browser_demo.py
+  python scripts/live_browser_demo.py --scenario full
   ```

@@ -1,18 +1,20 @@
 """
 scripts/live_browser_demo.py
 ระบบสาธิตสดอัตโนมัติผ่านเบราว์เซอร์จริง (Playwright Headed Live Demo)
-สำหรับแสดงการทำงานจริงของ Smart CRM Analytics ครบทั้ง 3 เคสธุรกิจ 7 ขั้นตอน (DFD Process 1.0 - 5.0)
+สำหรับแสดงการทำงานจริงของ Smart CRM Analytics (DFD Process 1.0 - 5.0, D1 - D5)
 
-จุดเด่น:
-  - เปิดหน้าต่างเบราว์เซอร์ Chromium จริงบนหน้าจอ (Headless=False)
-  - ความเร็วระดับ Slow-Mo พร้อมป้ายหัวข้อจำลอง (Floating HUD Subtitles) บนหน้าจอ
-  - สาธิตการไหลของข้อมูลตั้งแต่ D1 (LEAD) -> D2 (ACTIVITY) -> D3 (SALE) -> D4 (CUSTOMER & TICKET) -> D5 (DATA SCIENCE ANALYTICS)
-  - รองรับทั้งรันต่อจากเซิร์ฟเวอร์เดิม (:8501) หรือเปิด Streamlit ชั่วคราวให้อัตโนมัติ
+โหมดการทำงาน:
+  1. Standard Flow (7 ขั้นตอนหลัก 10 นาที — ค่าเริ่มต้น):
+       python scripts/live_browser_demo.py --step
+  2. Grand Tour Flow (18 ขั้นตอนจัดเต็ม เจาะลึกทุกหน้าจอ 1.1 ก่อน 1.2):
+       python scripts/live_browser_demo.py --step --scenario full
+       # หรือ: python scripts/live_browser_demo.py -s --scenario grand
 
-วิธีใช้งาน:
-  python scripts/live_browser_demo.py
-  python scripts/live_browser_demo.py --slow-mo 1000 --pause 2.0
-  python scripts/live_browser_demo.py --headless  (กรณีรันแบบไม่เปิดหน้าต่าง)
+คุณสมบัติพิเศษ:
+  - เปิดเบราว์เซอร์ Chromium จริงบนหน้าจอ (Headless=False)
+  - แถบป้ายคำบรรยายลอยบนหัวเว็บ (Floating HUD Subtitles)
+  - โหมด Interactive Step-by-Step หยุดรอให้กด [Enter] พร้อมแสดงบทพูดแนะนำสำหรับบรรยาย
+  - ทัวร์ครอบคลุม 3NF SQLite, RBAC Security, Random Forest, RFM, Churn Health, Campaign ROI
 """
 
 import argparse
@@ -88,14 +90,13 @@ def set_hud(page, badge: str, title: str, desc: str):
 
 def login(page, base_url: str, username: str, step_pause: float = 1.0):
     page.goto(base_url, wait_until="networkidle")
-    page.wait_for_timeout(600)
+    page.wait_for_timeout(800)
 
-    # หากมีการล็อกอินค้างอยู่ ให้กดออกจากระบบก่อน
     logout_btn = page.get_by_role("button").filter(has_text="ออกจากระบบ")
     if logout_btn.count() > 0 and logout_btn.first.is_visible():
         logout_btn.first.click()
         page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(600)
+        page.wait_for_timeout(800)
 
     if username == "guest":
         btn = page.get_by_role("button").filter(has_text="ผู้สนใจ")
@@ -106,7 +107,7 @@ def login(page, base_url: str, username: str, step_pause: float = 1.0):
         if btn.count() > 0:
             btn.first.click()
     page.wait_for_load_state("networkidle")
-    page.wait_for_timeout(int(step_pause * 800))
+    page.wait_for_timeout(max(1000, int(step_pause * 1000)))
 
 
 def click_menu(page, title: str, step_pause: float = 1.0):
@@ -114,22 +115,22 @@ def click_menu(page, title: str, step_pause: float = 1.0):
     if link.count() > 0:
         link.click()
         page.wait_for_load_state("networkidle")
-        page.wait_for_timeout(int(step_pause * 800))
+        page.wait_for_timeout(max(1200, int(step_pause * 1200)))
 
 
 def click_tab(page, tab_name: str, step_pause: float = 1.0):
     tab = page.get_by_role("tab").filter(has_text=tab_name).first
     if tab.count() > 0:
         tab.click()
-        page.wait_for_timeout(int(step_pause * 800))
+        page.wait_for_timeout(max(1000, int(step_pause * 1000)))
 
 
-def wait_next_step(page, step_num: int, step_name: str, talk_point: str, interactive: bool = False, pause: float = 1.0):
+def wait_next_step(page, step_num: int, total_steps: int, step_name: str, talk_point: str, interactive: bool = False, pause: float = 1.0):
     """ฟังก์ชันหยุดรอคำสั่งกด Enter หรือเล่นต่ออัตโนมัติ พร้อมแสดงบทพูดแนะนำ"""
     if interactive:
-        set_hud(page, f"สเต็ปที่ {step_num}/7 [รอสั่ง Next ⏭️]", step_name, "กด [Enter] ใน Terminal เพื่อสั่งให้เบราว์เซอร์คลิกทำขั้นตอนนี้...")
-        print("\n" + "━" * 75)
-        print(f"⏸️  [ขั้นตอนที่ {step_num}/7] {step_name}")
+        set_hud(page, f"สเต็ปที่ {step_num}/{total_steps} [รอสั่ง Next ⏭️]", step_name, "กด [Enter] ใน Terminal เพื่อสั่งให้เบราว์เซอร์คลิกทำขั้นตอนนี้...")
+        print("\n" + "━" * 78)
+        print(f"⏸️  [ขั้นตอนที่ {step_num}/{total_steps}] {step_name}")
         print(f"🗣️  บทพูดนำเสนอ: \"{talk_point}\"")
         print(f"👉 กด [Enter] เพื่อสั่งให้เบราว์เซอร์เริ่มทำขั้นตอนนี้ (หรือพิมพ์ q เพื่อหยุด): ", end="", flush=True)
         try:
@@ -144,10 +145,568 @@ def wait_next_step(page, step_num: int, step_name: str, talk_point: str, interac
         time.sleep(pause)
 
 
+# =============================================================================
+# SCENARIO 1: STANDARD FLOW (7 STEPS — ของเดิม 100%)
+# =============================================================================
+def run_standard_tour(page, base_url: str, args):
+    total_steps = 7
+
+    # STEP 1: (D1) Portal
+    wait_next_step(
+        page, 1, total_steps,
+        "Portal: ผู้สนใจลงทะเบียนขอข้อมูล (DFD 1.2 -> Data Store D1: LEAD)",
+        "เราเริ่มต้นจากมุมมองของบุคคลภายนอก (Lead) ส่งข้อมูลติดต่อผ่าน Customer Portal ข้อมูลไหลเข้าสู่ D1: LEAD ทันทีครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 1/7] (D1) Portal: ผู้สนใจภายนอกลงทะเบียนความสนใจ (DFD 1.2)...")
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, "ขั้นตอนที่ 1/7", "External Entity: Portal ผู้สนใจ", "ลงทะเบียนขอข้อมูล (Process 1.2 -> Data Store D1: LEAD)")
+
+    click_tab(page, "ลงทะเบียนความสนใจ", args.pause)
+    page.get_by_label("ชื่อ-นามสกุล *").fill("คุณสมชาย หมายมั่น")
+    page.get_by_label("เบอร์โทรศัพท์ *").fill("081-999-8888")
+    email_field = page.get_by_label("อีเมล")
+    if email_field.is_visible():
+        email_field.fill("somchai@siamgroup.co.th")
+
+    submit_reg = page.get_by_role("button", name=re.compile("ส่งข้อมูลการติดต่อ")).first
+    if submit_reg.is_visible():
+        submit_reg.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ บันทึก Lead ใหม่: 'คุณสมชาย หมายมั่น' เข้าตาราง D1: LEAD สำเร็จ")
+
+    # STEP 2: (D1, D2) Marketing
+    wait_next_step(
+        page, 2, total_steps,
+        "Marketing: ตรวจรับ Lead & เชื่อมโยงแคมเปญ ROI สูงสุด CMP003 (DFD 1.1, 1.3 -> D2)",
+        "ฝ่ายการตลาดเชื่อมโยงแคมเปญ Digital Ads Q3 ที่มี ROI สูงสุด 103% เพื่อส่งมอบโปรโมชันส่วนลด 10% ให้ผู้สนใจครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 2/7] (D1, D2) Marketing: เชื่อมโยงแคมเปญ ROI สูงสุด (CMP003) & ส่งโปรโมชัน...")
+    login(page, base_url, "marketing1", args.pause)
+    set_hud(page, "ขั้นตอนที่ 2/7", "Marketing: ฝ่ายการตลาด", "ตรวจรับ Lead เชื่อมโยงแคมเปญ CMP003 (Process 1.1, 1.3 -> D2)")
+
+    click_menu(page, "งานการตลาด", args.pause)
+    click_tab(page, "แคมเปญทั้งหมด", args.pause)
+    print("    ✅ แคมเปญ Digital Ads Q3 (CMP003 ส่วนลด 10%, ROI 103%) พร้อมใช้งาน")
+
+    # STEP 3: (D2, D3) Sales
+    wait_next_step(
+        page, 3, total_steps,
+        "Sales: AI Lead Scoring (Hot Lead LD0264 85%) & ออกใบเสนอราคา (DFD 2.1, 2.3 -> D3)",
+        "ฝ่ายขายใช้ Random Forest คัดกรองคิวงาน พบว่าคุณวิชัย LD0264 มีคะแนน 85% จึงโทรติดต่อและออกใบเสนอราคาพร้อมส่วนลดอัตโนมัติครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 3/7] (D2, D3) Sales: AI Lead Scoring (Hot Lead LD0264) & ออกใบเสนอราคา...")
+    login(page, base_url, "sale1", args.pause)
+    set_hud(page, "ขั้นตอนที่ 3/7", "Sales: คิวงาน AI & ออกใบเสนอราคา", "AI ทำนายโอกาสปิดการขาย 85% (Hot Lead) -> ออกใบเสนอราคา (Process 2.3 -> D3)")
+
+    click_menu(page, "ติดตามการขาย", args.pause)
+    click_tab(page, "คิวงานจัดลำดับด้วย AI", args.pause)
+
+    click_tab(page, "ค้นหา & บันทึกกิจกรรม", args.pause)
+    act_note = page.get_by_label("บันทึกผลการติดต่อ")
+    if act_note.is_visible():
+        act_note.fill("โทรติดต่อเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับใบเสนอราคาพร้อมส่วนลดแคมเปญ")
+    save_act = page.get_by_role("button", name=re.compile("บันทึก")).first
+    if save_act.is_visible():
+        save_act.click()
+        page.wait_for_timeout(1200)
+
+    click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
+    click_tab(page, "ออกใบเสนอราคา", args.pause)
+
+    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
+    if not ms.is_visible():
+        ms = page.locator("div[data-testid='stMultiSelect']").first
+    if ms.is_visible():
+        ms.click()
+        page.wait_for_timeout(600)
+        options = page.locator("li[role='option']")
+        if options.count() >= 2:
+            options.nth(0).click()
+            page.wait_for_timeout(500)
+            options.nth(1).click()
+            page.wait_for_timeout(500)
+        elif options.count() >= 1:
+            options.nth(0).click()
+            page.wait_for_timeout(500)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(800)
+
+    issue_btn = page.get_by_role("button", name=re.compile("ออกใบเสนอราคา")).first
+    if issue_btn.is_visible():
+        issue_btn.click()
+        page.wait_for_timeout(2000)
+    print("    ✅ ออกใบเสนอราคาสำเร็จ (บันทึกข้อมูลลงตาราง D3: SALE และ SALE_DETAIL)")
+
+    # STEP 4: (D3) Portal Order
+    wait_next_step(
+        page, 4, total_steps,
+        "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1 -> D3)",
+        "ลูกค้าตรวจดูใบเสนอราคาผ่าน Portal และกดยืนยันคำสั่งซื้อแบบ Self-service ส่งสถานะเข้าสู่ Process 3.1 ครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 4/7] (D3) Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1)...")
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, "ขั้นตอนที่ 4/7", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค้ายืนยันการสั่งซื้อผ่านพอร์ทัล (Process 3.1 -> อัปเดตสถานะใน D3)")
+
+    click_tab(page, "โปรโมชัน & ใบเสนอราคา", args.pause)
+    click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
+    confirm_btn = page.get_by_role("button", name=re.compile("ยืนยันสั่งซื้อ")).first
+    if confirm_btn.is_visible():
+        confirm_btn.click()
+        page.wait_for_timeout(1500)
+        print("    ✅ ลูกค้ายืนยันคำสั่งซื้อเรียบร้อย")
+    else:
+        print("    ℹ️ รายการคำสั่งซื้ออยู่ในสถานะพร้อมตรวจรับ")
+
+    # STEP 5: (D3, D4) Sales Payment & Receipt
+    wait_next_step(
+        page, 5, total_steps,
+        "Sales: ตรวจรับเงิน, ออกใบเสร็จ & ยกระดับสู่ CUSTOMER (DFD 3.2, 3.3 -> D4)",
+        "ฝ่ายขายตรวจสอบสลิปการโอนเงิน ออกใบเสร็จรับเงิน และระบบยกระดับสถานะจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 5/7] (D3, D4) Sales: ตรวจรับเงิน -> ออกใบเสร็จ -> ยกระดับเป็น CUSTOMER (DFD 3.2 - 3.3)...")
+    login(page, base_url, "sale1", args.pause)
+    set_hud(page, "ขั้นตอนที่ 5/7", "Sales: ตรวจรับเงิน & ยกระดับเป็น Customer", "ตรวจสลิป ออกใบเสร็จ ยกระดับจาก Lead สู่ D4: CUSTOMER (Process 3.2 - 3.3)")
+
+    click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
+    click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
+    click_tab(page, "ตรวจสอบการชำระเงิน", args.pause)
+    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
+    print("    ✅ ยกระดับข้อมูลเป็น CUSTOMER และสร้างใบเสร็จรับเงินในระบบเรียบร้อย")
+
+    # STEP 6: (D4) Support & CSAT
+    wait_next_step(
+        page, 6, total_steps,
+        "Support: แชทบริการลูกค้า, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3 -> D4)",
+        "บริการหลังการขาย เจ้าหน้าที่ประสานงานผ่านแชทสดสองทาง เมื่อปิดเคส ลูกค้าประเมิน 5 ดาว ช่วยฟื้นฟู Health Score ของลูกค้าครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 6/7] (D4) Support & CSAT: เปิดเคสแจ้งปัญหา, แชทสด, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3)...")
+    login(page, base_url, "cs1", args.pause)
+    set_hud(page, "ขั้นตอนที่ 6/7", "Support & CSAT: บริการหลังการขาย", "จัดการเคสแจ้งปัญหา สนทนาสองทาง ปิดเคส และรับคะแนน 5 ดาว (Process 4.0 -> D4)")
+
+    click_menu(page, "รับแจ้งปัญหา", args.pause)
+    click_tab(page, "คิวเคส & สนทนา", args.pause)
+
+    chat_input = page.get_by_placeholder(re.compile("พิมพ์ข้อความตอบกลับ")).or_(
+        page.locator("[data-testid='stChatInputTextArea']")
+    ).first
+    if chat_input.is_visible():
+        chat_input.fill("ทีมวิศวกรได้ดำเนินการตรวจสอบฐานข้อมูลและปรับปรุงคอนฟิกให้เรียบร้อยแล้วครับ ใช้งานได้ปกติทันที")
+        chat_input.press("Enter")
+        page.wait_for_timeout(1500)
+
+    upd_btn = page.get_by_role("button", name=re.compile("อัปเดต")).first
+    if upd_btn.is_visible():
+        upd_btn.click()
+        page.wait_for_timeout(1500)
+
+    login(page, base_url, "guest", args.pause)
+    click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
+    rate_btn = page.get_by_role("button", name=re.compile("ส่งคะแนน")).first
+    if rate_btn.is_visible():
+        rate_btn.click()
+        page.wait_for_timeout(1200)
+    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ ส่งผลบวกต่อ Health Score ของลูกค้า")
+
+    # STEP 7: (D5) Executive Analytics
+    wait_next_step(
+        page, 7, total_steps,
+        "Executive: แดชบอร์ดวิเคราะห์ 4 โมเดล Data Science อัจฉริยะ (DFD 5.0 -> D5)",
+        "แดชบอร์ดผู้บริหาร รวบรวมข้อมูลจริงมาประมวลผลด้วย 4 โมเดล Data Science แบบ Real-time เพื่อการตัดสินใจทางธุรกิจที่แม่นยำครับ",
+        args.interactive, args.pause
+    )
+    print("▶️ [ขั้นตอนที่ 7/7] (D5) Executive Analytics: ชมแดชบอร์ด 4 โมเดล Data Science (DFD 5.0)...")
+    login(page, base_url, "admin1", args.pause)
+    click_menu(page, "แดชบอร์ดวิเคราะห์", args.pause)
+
+    set_hud(page, "ขั้นตอนที่ 7/7 [1/4]", "Data Science: AI Lead Scoring", "ทำนายโอกาสปิดการขายด้วย Random Forest (AUC > 0.80)")
+    click_tab(page, "Lead Scoring", args.pause)
+    time.sleep(args.pause * 1.5)
+
+    set_hud(page, "ขั้นตอนที่ 7/7 [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค้า Recency, Frequency, Monetary (Champions vs At Risk)")
+    click_tab(page, "RFM Segmentation", args.pause)
+    time.sleep(args.pause * 1.5)
+
+    set_hud(page, "ขั้นตอนที่ 7/7 [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค้าตีจากด้วยดัชนีสุขภาพ 5 มิติ (รวมคะแนนบริการจาก Step 6)")
+    click_tab(page, "Customer Health & Churn", args.pause)
+    time.sleep(args.pause * 1.5)
+
+    set_hud(page, "ขั้นตอนที่ 7/7 [4/4]", "Data Science: Campaign ROI Analytics", "วิเคราะห์อัตราผลตอบแทนแคมเปญ (CMP003 ROI สูงสุด 103%)")
+    click_tab(page, "Campaign ROI", args.pause)
+    time.sleep(args.pause * 1.5)
+
+    set_hud(page, "ขั้นตอนที่ 7/7 [สรุป]", "Process 5.2: รายงานสรุปยอดขาย", "รายงานสรุปยอดขายตามมิติต่างๆ สำหรับผู้บริหาร")
+    click_tab(page, "รายงานสรุปยอดขาย", args.pause)
+    time.sleep(args.pause * 1.5)
+
+    set_hud(page, "🎉 สำเร็จครบ 100%", "Smart CRM Analytics Live Demo", "สาธิตกระบวนการจริง D1-D5 ครบถ้วน 3 เคสธุรกิจ 7 ขั้นตอน")
+
+
+# =============================================================================
+# SCENARIO 2: GRAND TOUR 18 STEPS (จัดเต็ม 1.1 ก่อน 1.2 ครบทุกเมนู 100%)
+# =============================================================================
+def run_grand_tour(page, base_url: str, args):
+    total_steps = 18
+
+    # 1. Process 1.1: สร้างแคมเปญการตลาดใหม่จริง
+    wait_next_step(
+        page, 1, total_steps,
+        "Marketing: สร้างแคมเปญการตลาดใหม่ (Process 1.1 -> ตาราง CAMPAIGN)",
+        "เริ่มต้นที่การตลาดสร้างแคมเปญล่วงหน้า กำหนดงบประมาณ และส่วนลด 15% เพื่อนำไปยิงโปรโมชันครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "marketing1", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 1/{total_steps}", "Marketing: สร้างแคมเปญใหม่", "กรอกฟอร์มสร้างแคมเปญ กำหนดงบและส่วนลด 15% (Process 1.1 -> ตาราง CAMPAIGN)")
+    click_menu(page, "งานการตลาด", args.pause)
+    click_tab(page, "สร้างแคมเปญ", args.pause)
+    try:
+        page.get_by_label(re.compile("ชื่อแคมเปญ")).wait_for(state="visible", timeout=6000)
+    except Exception:
+        pass
+
+    c_name = page.get_by_label(re.compile("ชื่อแคมเปญ"))
+    if c_name.count() > 0 and c_name.first.is_visible():
+        c_name.first.fill("Mid-Year Super Deal 2026")
+    b_box = page.get_by_label(re.compile("งบประมาณ"))
+    if b_box.count() > 0 and b_box.first.is_visible():
+        b_box.first.fill("60000")
+    d_box = page.get_by_label(re.compile("ส่วนลด"))
+    if d_box.count() > 0 and d_box.first.is_visible():
+        d_box.first.fill("15")
+    p_box = page.get_by_label(re.compile("รายละเอียดโปรโมชัน"))
+    if p_box.count() > 0 and p_box.first.is_visible():
+        p_box.first.fill("แคมเปญกระตุ้นยอดขายกลุ่ม Enterprise รับส่วนลดพิเศษ 15% พร้อมฟรี Support 1 ปี")
+    save_c = page.get_by_role("button", name=re.compile("บันทึกแคมเปญ")).first
+    if save_c.count() > 0 and save_c.is_visible():
+        save_c.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ สร้างแคมเปญใหม่ 'Mid-Year Super Deal 2026' ลงตาราง CAMPAIGN สำเร็จ")
+
+    # 2. Process 1.1: ตรวจสอบแคมเปญทั้งหมดและ CMP003
+    wait_next_step(
+        page, 2, total_steps,
+        "Marketing: ส่องตารางแคมเปญทั้งหมด & แคมเปญ ROI สูงสุด (Process 1.1)",
+        "ตรวจสอบรายการแคมเปญที่พร้อมใช้งาน ชี้ให้เห็น CMP003 Digital Ads Q3 ที่สร้าง ROI สูงสุด 103% ครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 2/{total_steps}", "Marketing: ตารางแคมเปญทั้งหมด", "ดูแคมเปญที่เปิดใช้งานอยู่ และแคมเปญ CMP003 ที่มี ROI สูงสุด 103% (Process 1.1)")
+    click_tab(page, "แคมเปญทั้งหมด", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ ตรวจสอบแคมเปญพร้อมใช้งานครบถ้วน")
+
+    # 3. Process 1.2: Portal ลูกค้าลงทะเบียน
+    wait_next_step(
+        page, 3, total_steps,
+        "Portal: ผู้สนใจลงทะเบียนขอข้อมูล (Process 1.2 -> ตาราง D1: LEAD)",
+        "ผู้สนใจภายนอกเห็นสื่อโฆษณา จึงเข้ามาลงทะเบียนผ่าน Customer Portal พร้อมเลือกแคมเปญโปรโมชันครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 3/{total_steps}", "Portal: ผู้สนใจลงทะเบียนขอข้อมูล", "ลูกค้าลงทะเบียนความสนใจ ผูกกับแคมเปญการตลาด (Process 1.2 -> D1: LEAD)")
+    click_tab(page, "ลงทะเบียนความสนใจ", args.pause)
+    page.get_by_label("ชื่อ-นามสกุล *").fill("คุณสมชาย หมายมั่น")
+    page.get_by_label("เบอร์โทรศัพท์ *").fill("081-999-8888")
+    em = page.get_by_label("อีเมล")
+    if em.is_visible():
+        em.fill("somchai@siamgroup.co.th")
+    sub_r = page.get_by_role("button", name=re.compile("ส่งข้อมูลการติดต่อ")).first
+    if sub_r.is_visible():
+        sub_r.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ บันทึก Lead ใหม่: คุณสมชาย หมายมั่น เข้าตาราง D1: LEAD สำเร็จ")
+
+    # 4. Process 1.3: Portal ลูกค้าเปิดดูโปรโมชันที่ได้รับ
+    wait_next_step(
+        page, 4, total_steps,
+        "Portal: ตรวจสอบโปรโมชันและส่วนลดที่ได้รับ (Process 1.3)",
+        "ลูกค้าเข้ามาดูสิทธิประโยชน์และโปรโมชันที่ผูกไว้กับแคมเปญการตลาดครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 4/{total_steps}", "Portal: โปรโมชันที่ได้รับ", "แสดงผลรายละเอียดโปรโมชันและส่วนลดที่ได้รับตามแคมเปญ (Process 1.3)")
+    click_tab(page, "โปรโมชัน & ใบเสนอราคา", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ ลูกค้าตรวจสอบโปรโมชันและส่วนลดเรียบร้อย")
+
+    # 5. Process 2.1: Sales คิวงาน AI Lead Scoring
+    wait_next_step(
+        page, 5, total_steps,
+        "Sales: ตรวจสอบคิวงานจัดลำดับด้วย AI (Process 2.1 -> ML Lead Scoring)",
+        "ฝ่ายขายใช้ Random Forest คัดกรองคิวงาน พบว่าคุณวิชัย LD0264 มีโอกาสซื้อสูงถึง 85% (Hot Lead) ครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "sale1", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 5/{total_steps}", "Sales: คิวงาน AI Lead Scoring", "Random Forest คัดกรอง Hot Lead LD0264 โอกาสปิดการขาย 85% (Process 2.1)")
+    click_menu(page, "ติดตามการขาย", args.pause)
+    click_tab(page, "คิวงานจัดลำดับด้วย AI", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ ตรวจสอบ Hot Lead รหัส LD0264 (นายวิชัย ทองดี)")
+
+    # 6. Process 2.2: Sales บันทึกผลการติดต่อ & ไทม์ไลน์
+    wait_next_step(
+        page, 6, total_steps,
+        "Sales: บันทึกผลการติดต่อ & ดูประวัติไทม์ไลน์ (Process 2.2 -> D2: LEAD_ACTIVITY)",
+        "ฝ่ายขายโทรติดต่อ นำเสนอโซลูชัน และบันทึกประวัติการปฏิสัมพันธ์ลงตาราง D2 ครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 6/{total_steps}", "Sales: บันทึกผลการติดต่อ", "บันทึกผลการโทรคุย และตรวจสอบประวัติไทม์ไลน์ (Process 2.2 -> D2: LEAD_ACTIVITY)")
+    click_tab(page, "ค้นหา & บันทึกกิจกรรม", args.pause)
+    act_n = page.get_by_label("บันทึกผลการติดต่อ")
+    if act_n.is_visible():
+        act_n.fill("โทรนำเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับข้อเสนอใบเสนอราคา")
+    s_act = page.get_by_role("button", name=re.compile("บันทึก")).first
+    if s_act.is_visible():
+        s_act.click()
+        page.wait_for_timeout(1200)
+    print("    ✅ บันทึกกิจกรรมและอัปเดตไทม์ไลน์เรียบร้อย")
+
+    # 7. Process 2.3: Sales ออกใบเสนอราคา
+    wait_next_step(
+        page, 7, total_steps,
+        "Sales: ออกใบเสนอราคา (Quotation) (Process 2.3 -> D3: SALE & SALE_DETAIL)",
+        "ฝ่ายขายออกใบเสนอราคา โดยเลือกสินค้าหลายรายการ ระบบหักลดส่วนลดแคมเปญอัตโนมัติครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 7/{total_steps}", "Sales: ออกใบเสนอราคา", "เลือกสินค้าแบบ Multiselect คำนวณส่วนลดอัตโนมัติ ออกเลขที่ QT (Process 2.3 -> D3)")
+    click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
+    click_tab(page, "ออกใบเสนอราคา", args.pause)
+    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
+    if not ms.is_visible():
+        ms = page.locator("div[data-testid='stMultiSelect']").first
+    if ms.is_visible():
+        ms.click()
+        page.wait_for_timeout(600)
+        options = page.locator("li[role='option']")
+        if options.count() >= 2:
+            options.nth(0).click()
+            page.wait_for_timeout(500)
+            options.nth(1).click()
+            page.wait_for_timeout(500)
+        elif options.count() >= 1:
+            options.nth(0).click()
+            page.wait_for_timeout(500)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(800)
+    iss_btn = page.get_by_role("button", name=re.compile("ออกใบเสนอราคา")).first
+    if iss_btn.is_visible():
+        iss_btn.click()
+        page.wait_for_timeout(2000)
+    print("    ✅ ออกใบเสนอราคาสำเร็จ (บันทึกข้อมูลลงตาราง D3)")
+
+    # 8. Process 3.1: Portal ลูกค้ายืนยันคำสั่งซื้อ
+    wait_next_step(
+        page, 8, total_steps,
+        "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (Process 3.1 -> D3: SALE)",
+        "ลูกค้าตรวจสอบความถูกต้องของรายการและยอดเงิน แล้วกดยืนยันคำสั่งซื้อผ่าน Portal ครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 8/{total_steps}", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค้ายืนยันสั่งซื้อสินค้าตามใบเสนอราคาแบบ Self-service (Process 3.1)")
+    click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
+    c_btn = page.get_by_role("button", name=re.compile("ยืนยันสั่งซื้อ")).first
+    if c_btn.is_visible():
+        c_btn.click()
+        page.wait_for_timeout(1500)
+        print("    ✅ ลูกค้ายืนยันคำสั่งซื้อเรียบร้อย")
+    else:
+        print("    ℹ️ คำสั่งซื้ออยู่ในสถานะพร้อมตรวจรับ")
+
+    # 9. Process 3.1: Sales รับ & ตรวจสอบคำสั่งซื้อ
+    wait_next_step(
+        page, 9, total_steps,
+        "Sales: ตรวจสอบคำสั่งซื้อของลูกค้า (Process 3.1)",
+        "ฝ่ายขายตรวจรับคำสั่งซื้อที่ลูกค้ายืนยันเข้ามา เพื่อส่งต่อไปยังขั้นตอนการชำระเงินครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "sale1", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 9/{total_steps}", "Sales: ตรวจรับคำสั่งซื้อ", "ฝ่ายขายตรวจสอบรายการและส่งต่อไปยังขั้นตอนชำระเงิน (Process 3.1)")
+    click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
+    click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
+    time.sleep(args.pause)
+    ok_b = page.get_by_role("button", name=re.compile("ตรวจแล้วถูกต้อง")).first
+    if ok_b.is_visible():
+        ok_b.click()
+        page.wait_for_timeout(1200)
+    print("    ✅ ตรวจรับคำสั่งซื้อเรียบร้อย")
+
+    # 10. Process 3.2: Sales ตรวจสอบการชำระเงิน & สลิป
+    wait_next_step(
+        page, 10, total_steps,
+        "Sales: ตรวจสอบหลักฐานสลิป & บันทึกการรับเงิน (Process 3.2 -> D3: SALE)",
+        "ฝ่ายขายตรวจหลักฐานการโอนเงิน บันทึกรหัสอ้างอิงธุรกรรมธนาคารและยืนยันรับเงินครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 10/{total_steps}", "Sales: ตรวจสอบการชำระเงิน", "ตรวจสอบหลักฐานสลิปโอนเงิน บันทึกเลขอ้างอิงธนาคาร (Process 3.2 -> D3: SALE)")
+    click_tab(page, "ตรวจสอบการชำระเงิน", args.pause)
+    time.sleep(args.pause)
+    ref_b = page.get_by_label(re.compile("เลขอ้างอิง")).first
+    if ref_b.count() > 0 and ref_b.is_visible():
+        ref_b.fill("TRF2026-9988")
+    p_btn = page.get_by_role("button", name=re.compile("ยืนยันรับเงิน")).first
+    if p_btn.count() > 0 and p_btn.is_visible():
+        p_btn.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ บันทึกการรับเงินและเลขอ้างอิงธนาคารสำเร็จ")
+
+    # 11. Process 3.3: Sales ออกใบเสร็จ & ยกระดับสู่ CUSTOMER
+    wait_next_step(
+        page, 11, total_steps,
+        "Sales: ออกใบเสร็จรับเงิน & ยกระดับสู่ CUSTOMER (Process 3.3 -> D4: CUSTOMER)",
+        "ระบบปิดการขาย ออกใบเสร็จรับเงิน และยกระดับสถานะจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 11/{total_steps}", "Sales: ออกใบเสร็จ & ยกระดับลูกค้า", "ออกใบเสร็จรับเงิน และยกระดับจาก Lead เข้าสู่ตาราง D4: CUSTOMER (Process 3.3)")
+    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
+    r_btn = page.get_by_role("button", name=re.compile("ออกใบเสร็จ")).first
+    if r_btn.count() > 0 and r_btn.is_visible():
+        r_btn.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ ยกระดับข้อมูลเป็น CUSTOMER และสร้างใบเสร็จรับเงินเรียบร้อย")
+
+    # 12. Process 3.3: Portal ลูกค้าเปิดดูใบเสร็จ
+    wait_next_step(
+        page, 12, total_steps,
+        "Portal: ลูกค้าเปิดดูใบเสร็จรับเงินอิเล็กทรอนิกส์ (Process 3.3)",
+        "ลูกค้าสามารถเปิดดูและดาวน์โหลดใบเสร็จรับเงินอิเล็กทรอนิกส์ผ่านระบบ Portal ได้ทันทีครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 12/{total_steps}", "Portal: ใบเสร็จรับเงินอิเล็กทรอนิกส์", "ลูกค้าเปิดดูและดาวน์โหลดใบเสร็จรับเงิน (Process 3.3)")
+    click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ แสดงผลใบเสร็จรับเงินอิเล็กทรอนิกส์พร้อมดาวน์โหลด")
+
+    # 13. Process 4.0: ส่องโปรไฟล์ลูกค้า 360 องศา & RFM Tier
+    wait_next_step(
+        page, 13, total_steps,
+        "Customer 360: ส่องโปรไฟล์ลูกค้า 360 องศา & RFM รายบุคคล (Process 4.0)",
+        "พาชมหน้าข้อมูลลูกค้า ดูประวัติบริษัท เลขผู้เสียภาษี และดัชนี RFM Tier รายบุคคลครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "sale1", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 13/{total_steps}", "Customer 360: โปรไฟล์ลูกค้า", "ส่องโปรไฟล์ลูกค้า 360 องศา ดูเลขภาษี ที่อยู่ และ RFM Tier รายบุคคล (Process 4.0)")
+    click_menu(page, "ข้อมูลลูกค้า", args.pause)
+    click_tab(page, "โปรไฟล์รายบุคคล", args.pause)
+    time.sleep(args.pause * 1.5)
+    print("    ✅ ส่องโปรไฟล์ลูกค้า 360 องศา และคะแนน RFM รายบุคคล")
+
+    # 14. Process 4.1: Portal ลูกค้าเปิดเคสแจ้งปัญหาเอง
+    wait_next_step(
+        page, 14, total_steps,
+        "Portal: ลูกค้าเปิดเคสแจ้งปัญหาการใช้งาน (Process 4.1 -> D4: TICKET)",
+        "จำลองลูกค้าเปิดเคสแจ้งขอคำปรึกษาผ่าน Customer Portal ข้อมูลไหลเข้าสู่ตาราง D4 ทันทีครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 14/{total_steps}", "Portal: ลูกค้าแจ้งปัญหาการใช้งาน", "ลูกค้าเปิดเคสแจ้งปัญหาผ่าน Portal (Process 4.1 -> ตาราง D4: TICKET)")
+    click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
+    tk_t = page.get_by_label(re.compile("หัวข้อปัญหา")).first
+    if tk_t.count() > 0 and tk_t.is_visible():
+        tk_t.fill("ขอคำปรึกษาการเชื่อมโยงระบบฐานข้อมูลและ API ยอดขาย")
+    tk_d = page.get_by_label(re.compile("รายละเอียด")).first
+    if tk_d.count() > 0 and tk_d.is_visible():
+        tk_d.fill("ต้องการเอกสาร API เพิ่มเติมสำหรับทีมวิศวกร")
+    s_tk = page.get_by_role("button", name=re.compile("ส่งเรื่องแจ้งปัญหา")).first
+    if s_tk.count() > 0 and s_tk.is_visible():
+        s_tk.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ ส่งเรื่องแจ้งปัญหาผ่าน Portal เรียบร้อย")
+
+    # 15. Process 4.2: Support แชทสดสองทาง & ปิดเคส
+    wait_next_step(
+        page, 15, total_steps,
+        "Support: แชทสดสองทาง & ปิดเคสปัญหา (Process 4.2 -> D4: TICKET_MESSAGE)",
+        "เจ้าหน้าที่บริการลูกค้าพิมพ์แชทสดตอบกลับลูกค้า มอบหมายผู้รับผิดชอบ และอัปเดตปิดเคสครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "cs1", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 15/{total_steps}", "Support: แชทสดแก้ไขปัญหา & ปิดเคส", "เจ้าหน้าที่ Support แชทตอบลูกค้า และกดปิดเคสสำเร็จ (Process 4.2)")
+    click_menu(page, "รับแจ้งปัญหา", args.pause)
+    click_tab(page, "คิวเคส & สนทนา", args.pause)
+    c_inp = page.get_by_placeholder(re.compile("พิมพ์ข้อความตอบกลับ")).or_(
+        page.locator("[data-testid='stChatInputTextArea']")
+    ).first
+    if c_inp.is_visible():
+        c_inp.fill("ทีมวิศวกรได้จัดส่งเอกสาร API และตัวอย่างโค้ดเชื่อมโยงฐานข้อมูลให้ทางอีเมลเรียบร้อยแล้วครับ")
+        c_inp.press("Enter")
+        page.wait_for_timeout(1500)
+    u_btn = page.get_by_role("button", name=re.compile("อัปเดต")).first
+    if u_btn.is_visible():
+        u_btn.click()
+        page.wait_for_timeout(1500)
+    print("    ✅ แชทสดสองทางและอัปเดตสถานะเคสบริการสำเร็จ")
+
+    # 16. Process 4.3: Portal ลูกค้าประเมิน 5 ดาว (CSAT)
+    wait_next_step(
+        page, 16, total_steps,
+        "Portal: ลูกค้าประเมินความพึงพอใจ 5 ดาว (Process 4.3 -> CSAT & Health Score)",
+        "ลูกค้าประเมินคะแนนบริการ 5 ดาว ซึ่งคะแนนนี้จะส่งผลบวกต่อ Customer Health Score ครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "guest", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 16/{total_steps}", "Portal: ประเมินความพึงพอใจ 5 ดาว", "ลูกค้าประเมินคะแนน CSAT 5 ดาว ส่งผลบวกต่อ Customer Health Score (Process 4.3)")
+    click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
+    rt_btn = page.get_by_role("button", name=re.compile("ส่งคะแนน")).first
+    if rt_btn.is_visible():
+        rt_btn.click()
+        page.wait_for_timeout(1200)
+    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ เข้าระบบสำเร็จ")
+
+    # 17. Process 5.1: แดชบอร์ดวิเคราะห์ 4 โมเดล Data Science
+    wait_next_step(
+        page, 17, total_steps,
+        "Executive: แดชบอร์ดวิเคราะห์ 4 โมเดล Data Science อัจฉริยะ (Process 5.1 -> D5)",
+        "ผู้บริหารตรวจดูผลวิเคราะห์ Real-time จาก 4 โมเดล: Lead Scoring, RFM, Churn Risk, และ Campaign ROI ครับ",
+        args.interactive, args.pause
+    )
+    login(page, base_url, "admin1", args.pause)
+    click_menu(page, "แดชบอร์ดวิเคราะห์", args.pause)
+
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [1/4]", "Data Science: AI Lead Scoring", "ทำนายโอกาสปิดการขายด้วย Random Forest (AUC > 0.80)")
+    click_tab(page, "Lead Scoring", args.pause)
+    time.sleep(args.pause)
+
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค้า Recency, Frequency, Monetary (Champions vs At Risk)")
+    click_tab(page, "RFM Segmentation", args.pause)
+    time.sleep(args.pause)
+
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค้าตีจากด้วยดัชนีสุขภาพ 5 มิติ")
+    click_tab(page, "Customer Health & Churn", args.pause)
+    time.sleep(args.pause)
+
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [4/4]", "Data Science: Campaign ROI Analytics", "วิเคราะห์อัตราผลตอบแทนแคมเปญ (CMP003 ROI สูงสุด 103%)")
+    click_tab(page, "Campaign ROI", args.pause)
+    time.sleep(args.pause)
+    print("    ✅ นำเสนอผลการวิเคราะห์ 4 โมเดล Data Science ครบถ้วน")
+
+    # 18. Process 5.2: รายงานสรุปยอดขาย & Export CSV
+    wait_next_step(
+        page, 18, total_steps,
+        "Executive: รายงานสรุปยอดขาย & Export CSV (Process 5.2 -> D5: REPORTS)",
+        "หน้าจอสุดท้าย รายงานสรุปยอดขายตามมิติต่างๆ สำหรับผู้บริหาร พร้อมระบบ Export CSV ครับ",
+        args.interactive, args.pause
+    )
+    set_hud(page, f"ขั้นตอนที่ 18/{total_steps}", "Process 5.2: สรุปยอดขาย & Export CSV", "รายงานสรุปยอดขายตามมิติต่างๆ และการส่งออกข้อมูล CSV สำหรับผู้บริหาร")
+    click_tab(page, "รายงานสรุปยอดขาย", args.pause)
+    time.sleep(args.pause * 1.5)
+    set_hud(page, "🎉 สำเร็จครบ 100%", "Grand Tour 18 ขั้นตอน", "สาธิตกระบวนการจริง DFD 1.0 - 5.0 ครบทุกหน้าจอสมบูรณ์แบบ")
+    print("    ✅ แสดงผลรายงานสรุปยอดขายและระบบ Export CSV เรียบร้อย")
+
+
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
 def run_live_demo():
     parser = argparse.ArgumentParser(description="Smart CRM Analytics - Live Browser Demo")
     parser.add_argument("-s", "--step", "--interactive", dest="interactive", action="store_true",
                         help="โหมดสั่ง Next ทีละสเต็ป: หยุดรอให้กด [Enter] ก่อนเริ่มทำแต่ละขั้นตอน")
+    parser.add_argument("--scenario", "--flow", dest="scenario", default="standard",
+                        choices=["standard", "full", "grand"],
+                        help="เลือก Scenario: 'standard' (7 ขั้นตอน 10 นาที) หรือ 'full' / 'grand' (Grand Tour 18 ขั้นตอนจัดเต็ม)")
     parser.add_argument("--port", type=int, default=8501, help="Streamlit port (default: 8501)")
     parser.add_argument("--slow-mo", type=int, default=1100, help="Playwright action delay in ms (default: 1100)")
     parser.add_argument("--pause", type=float, default=1.5, help="Extra pause after major steps in sec (default: 1.5)")
@@ -156,18 +715,24 @@ def run_live_demo():
     parser.add_argument("--keep-open", action="store_true", default=True, help="Keep browser open after completion")
     args = parser.parse_args()
 
-    print("\n" + "=" * 75)
+    is_grand = args.scenario in ("full", "grand")
+    total_steps = 18 if is_grand else 7
+
+    print("\n" + "=" * 78)
     print("🎬  SMART CRM ANALYTICS — REAL UI LIVE DEMO")
-    print("    สาธิตกระบวนการจริง 3 เคส 7 ขั้นตอน (DFD 1.0 - 5.0, D1 - D5)")
+    if is_grand:
+        print("    🌟 SCENARIO: GRAND TOUR 18 ขั้นตอน (เจาะลึก 1.1 ก่อน 1.2 ครบทุกหน้าจอ)")
+    else:
+        print("    📦 SCENARIO: STANDARD FLOW 7 ขั้นตอน (3 เคสธุรกิจ 10 นาที)")
     if args.interactive:
-        print("    🕹️  โหมด: INTERACTIVE STEP-BY-STEP (กด [Enter] เพื่อ Next ทีละขั้น)")
+        print(f"    🕹️  โหมด: INTERACTIVE STEP-BY-STEP (กด [Enter] เพื่อสั่ง Next ทีละ {total_steps} ขั้น)")
     else:
         print("    ⚡ โหมด: AUTO PLAY (เล่นต่อเนื่องตามความเร็ว Slow-Mo)")
-    print("=" * 75)
+    print("=" * 78)
 
     # 1. จัดการข้อมูลตั้งต้น
     if not args.no_seed:
-        print("\n🌱 [0/7] กำลังตั้งค่าฐานข้อมูลตั้งต้น (Seed Data)...")
+        print(f"\n🌱 [0/{total_steps}] กำลังตั้งค่าฐานข้อมูลตั้งต้น (Seed Data)...")
         subprocess.run([sys.executable, "db/seed_data.py"], cwd=ROOT, check=True,
                        capture_output=True, env={**os.environ, "PYTHONUTF8": "1"})
         print("    ✅ ฐานข้อมูล SQLite สะอาด พร้อมสาธิต 100%")
@@ -216,244 +781,19 @@ def run_live_demo():
         page = context.new_page()
 
         try:
-            # -------------------------------------------------------------
-            # STEP 0: เข้าหน้าแรก (Login Screen)
-            # -------------------------------------------------------------
             print("\n▶️ [เริ่มต้น] เข้าสู่หน้าหลักระบบ Smart CRM Analytics...")
             page.goto(base_url, wait_until="networkidle")
             page.wait_for_timeout(1000)
             set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.1", "ระบบบริหารจัดการลูกค้าอัจฉริยะ (3NF SQLite + AI Data Science)")
 
-            # -------------------------------------------------------------
-            # STEP 1: (D1) พอร์ทัลลูกค้า — ผู้สนใจลงทะเบียนใหม่
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 1,
-                "Portal: ผู้สนใจลงทะเบียนขอข้อมูล (DFD 1.2 -> Data Store D1: LEAD)",
-                "เราเริ่มต้นจากมุมมองของบุคคลภายนอก (Lead) ส่งข้อมูลติดต่อผ่าน Customer Portal ข้อมูลไหลเข้าสู่ D1: LEAD ทันทีครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 1/7] (D1) Portal: ผู้สนใจภายนอกลงทะเบียนความสนใจ (DFD 1.2)...")
-            login(page, base_url, "guest", args.pause)
-            set_hud(page, "ขั้นตอนที่ 1/7", "External Entity: Portal ผู้สนใจ", "ลงทะเบียนขอข้อมูล (Process 1.2 -> Data Store D1: LEAD)")
-
-            click_tab(page, "ลงทะเบียนความสนใจ", args.pause)
-            page.get_by_label("ชื่อ-นามสกุล *").fill("คุณสมชาย หมายมั่น")
-            page.get_by_label("เบอร์โทรศัพท์ *").fill("081-999-8888")
-            email_field = page.get_by_label("อีเมล")
-            if email_field.is_visible():
-                email_field.fill("somchai@siamgroup.co.th")
-
-            submit_reg = page.get_by_role("button", name=re.compile("ส่งข้อมูลการติดต่อ")).first
-            if submit_reg.is_visible():
-                submit_reg.click()
-                page.wait_for_timeout(1500)
-            print("    ✅ บันทึก Lead ใหม่: 'คุณสมชาย หมายมั่น' เข้าตาราง D1: LEAD สำเร็จ")
-
-            # -------------------------------------------------------------
-            # STEP 2: (D1, D2) การตลาด — ตรวจรับ Lead และส่งโปรโมชัน
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 2,
-                "Marketing: ตรวจรับ Lead & เชื่อมโยงแคมเปญ ROI สูงสุด CMP003 (DFD 1.1, 1.3 -> D2)",
-                "ฝ่ายการตลาดเชื่อมโยงแคมเปญ Digital Ads Q3 ที่มี ROI สูงสุด 103% เพื่อส่งมอบโปรโมชันส่วนลด 10% ให้ผู้สนใจครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 2/7] (D1, D2) Marketing: เชื่อมโยงแคมเปญ ROI สูงสุด (CMP003) & ส่งโปรโมชัน...")
-            login(page, base_url, "marketing1", args.pause)
-            set_hud(page, "ขั้นตอนที่ 2/7", "Marketing: ฝ่ายการตลาด", "ตรวจรับ Lead เชื่อมโยงแคมเปญ CMP003 (Process 1.1, 1.3 -> D2)")
-
-            click_menu(page, "งานการตลาด", args.pause)
-            click_tab(page, "แคมเปญทั้งหมด", args.pause)
-            print("    ✅ แคมเปญ Digital Ads Q3 (CMP003 ส่วนลด 10%, ROI 103%) พร้อมใช้งาน")
-
-            # -------------------------------------------------------------
-            # STEP 3: (D2, D3) ฝ่ายขาย — AI Lead Scoring & ออกใบเสนอราคา
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 3,
-                "Sales: AI Lead Scoring (Hot Lead LD0264 85%) & ออกใบเสนอราคา (DFD 2.1, 2.3 -> D3)",
-                "ฝ่ายขายใช้ Random Forest คัดกรองคิวงาน พบว่าคุณวิชัย LD0264 มีคะแนน 85% จึงโทรติดต่อและออกใบเสนอราคาพร้อมส่วนลดอัตโนมัติครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 3/7] (D2, D3) Sales: AI Lead Scoring (Hot Lead LD0264) & ออกใบเสนอราคา...")
-            login(page, base_url, "sale1", args.pause)
-            set_hud(page, "ขั้นตอนที่ 3/7", "Sales: คิวงาน AI & ออกใบเสนอราคา", "AI ทำนายโอกาสปิดการขาย 85% (Hot Lead) -> ออกใบเสนอราคา (Process 2.3 -> D3)")
-
-            click_menu(page, "ติดตามการขาย", args.pause)
-            click_tab(page, "คิวงานจัดลำดับด้วย AI", args.pause)
-
-            # บันทึกกิจกรรมการโทร
-            click_tab(page, "ค้นหา & บันทึกกิจกรรม", args.pause)
-            act_note = page.get_by_label("บันทึกผลการติดต่อ")
-            if act_note.is_visible():
-                act_note.fill("โทรติดต่อเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับใบเสนอราคาพร้อมส่วนลดแคมเปญ")
-            save_act = page.get_by_role("button", name=re.compile("บันทึก")).first
-            if save_act.is_visible():
-                save_act.click()
-                page.wait_for_timeout(1200)
-
-            # ออกใบเสนอราคา
-            click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
-            click_tab(page, "ออกใบเสนอราคา", args.pause)
-
-            # เลือกสินค้าใน Multiselect
-            ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
-            if not ms.is_visible():
-                ms = page.locator("div[data-testid='stMultiSelect']").first
-            if ms.is_visible():
-                ms.click()
-                page.wait_for_timeout(600)
-                options = page.locator("li[role='option']")
-                if options.count() >= 2:
-                    options.nth(0).click()
-                    page.wait_for_timeout(500)
-                    options.nth(1).click()
-                    page.wait_for_timeout(500)
-                elif options.count() >= 1:
-                    options.nth(0).click()
-                    page.wait_for_timeout(500)
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(800)
-
-            issue_btn = page.get_by_role("button", name=re.compile("ออกใบเสนอราคา")).first
-            if issue_btn.is_visible():
-                issue_btn.click()
-                page.wait_for_timeout(2000)
-            print("    ✅ ออกใบเสนอราคาสำเร็จ (บันทึกข้อมูลลงตาราง D3: SALE และ SALE_DETAIL)")
-
-            # -------------------------------------------------------------
-            # STEP 4: (D3) พอร์ทัลลูกค้า — ยืนยันคำสั่งซื้อ & ดูใบเสนอราคา
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 4,
-                "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1 -> D3)",
-                "ลูกค้าตรวจดูใบเสนอราคาผ่าน Portal และกดยืนยันคำสั่งซื้อแบบ Self-service ส่งสถานะเข้าสู่ Process 3.1 ครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 4/7] (D3) Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1)...")
-            login(page, base_url, "guest", args.pause)
-            set_hud(page, "ขั้นตอนที่ 4/7", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค้ายืนยันการสั่งซื้อผ่านพอร์ทัล (Process 3.1 -> อัปเดตสถานะใน D3)")
-
-            click_tab(page, "โปรโมชัน & ใบเสนอราคา", args.pause)
-            click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
-            confirm_btn = page.get_by_role("button", name=re.compile("ยืนยันสั่งซื้อ")).first
-            if confirm_btn.is_visible():
-                confirm_btn.click()
-                page.wait_for_timeout(1500)
-                print("    ✅ ลูกค้ายืนยันคำสั่งซื้อเรียบร้อย")
+            if is_grand:
+                run_grand_tour(page, base_url, args)
             else:
-                print("    ℹ️ รายการคำสั่งซื้ออยู่ในสถานะพร้อมตรวจรับ")
+                run_standard_tour(page, base_url, args)
 
-            # -------------------------------------------------------------
-            # STEP 5: (D3, D4) ฝ่ายขาย — ตรวจเงิน, ออกใบเสร็จ & ยกระดับเป็น CUSTOMER
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 5,
-                "Sales: ตรวจรับเงิน, ออกใบเสร็จ & ยกระดับสู่ CUSTOMER (DFD 3.2, 3.3 -> D4)",
-                "ฝ่ายขายตรวจสอบสลิปการโอนเงิน ออกใบเสร็จรับเงิน และระบบยกระดับสถานะจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 5/7] (D3, D4) Sales: ตรวจรับเงิน -> ออกใบเสร็จ -> ยกระดับเป็น CUSTOMER (DFD 3.2 - 3.3)...")
-            login(page, base_url, "sale1", args.pause)
-            set_hud(page, "ขั้นตอนที่ 5/7", "Sales: ตรวจรับเงิน & ยกระดับเป็น Customer", "ตรวจสลิป ออกใบเสร็จ ยกระดับจาก Lead สู่ D4: CUSTOMER (Process 3.2 - 3.3)")
-
-            click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
-            click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
-            click_tab(page, "ตรวจสอบการชำระเงิน", args.pause)
-            click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
-            print("    ✅ ยกระดับข้อมูลเป็น CUSTOMER และสร้างใบเสร็จรับเงินในระบบเรียบร้อย")
-
-            # -------------------------------------------------------------
-            # STEP 6: (D4) บริการลูกค้า — เปิดเคส, แชทแก้ไขปัญหา & ประเมิน 5 ดาว
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 6,
-                "Support: แชทบริการลูกค้า, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3 -> D4)",
-                "บริการหลังการขาย เจ้าหน้าที่ประสานงานผ่านแชทสดสองทาง เมื่อปิดเคส ลูกค้าประเมิน 5 ดาว ช่วยฟื้นฟู Health Score ของลูกค้าครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 6/7] (D4) Support & CSAT: เปิดเคสแจ้งปัญหา, แชทสด, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3)...")
-            login(page, base_url, "cs1", args.pause)
-            set_hud(page, "ขั้นตอนที่ 6/7", "Support & CSAT: บริการหลังการขาย", "จัดการเคสแจ้งปัญหา สนทนาสองทาง ปิดเคส และรับคะแนน 5 ดาว (Process 4.0 -> D4)")
-
-            click_menu(page, "รับแจ้งปัญหา", args.pause)
-            click_tab(page, "คิวเคส & สนทนา", args.pause)
-
-            # พิมพ์ตอบในช่องแชทเจ้าหน้าที่
-            chat_input = page.get_by_placeholder(re.compile("พิมพ์ข้อความตอบกลับ")).or_(
-                page.locator("[data-testid='stChatInputTextArea']")
-            ).first
-            if chat_input.is_visible():
-                chat_input.fill("ทีมวิศวกรได้ดำเนินการตรวจสอบฐานข้อมูลและปรับปรุงคอนฟิกให้เรียบร้อยแล้วครับ ใช้งานได้ปกติทันที")
-                chat_input.press("Enter")
-                page.wait_for_timeout(1500)
-
-            # ปิดเคส
-            upd_btn = page.get_by_role("button", name=re.compile("อัปเดต")).first
-            if upd_btn.is_visible():
-                upd_btn.click()
-                page.wait_for_timeout(1500)
-
-            # สลับไปให้คะแนน 5 ดาวใน Portal
-            login(page, base_url, "guest", args.pause)
-            click_tab(page, "ใบเสร็จ · แจ้งปัญหา · ให้คะแนน", args.pause)
-            rate_btn = page.get_by_role("button", name=re.compile("ส่งคะแนน")).first
-            if rate_btn.is_visible():
-                rate_btn.click()
-                page.wait_for_timeout(1200)
-            print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ ส่งผลบวกต่อ Health Score ของลูกค้า")
-
-            # -------------------------------------------------------------
-            # STEP 7: (D5) ผู้บริหาร — วิเคราะห์ 4 โมเดล Data Science อัจฉริยะ
-            # -------------------------------------------------------------
-            wait_next_step(
-                page, 7,
-                "Executive: แดชบอร์ดวิเคราะห์ 4 โมเดล Data Science อัจฉริยะ (DFD 5.0 -> D5)",
-                "แดชบอร์ดผู้บริหาร รวบรวมข้อมูลจริงมาประมวลผลด้วย 4 โมเดล Data Science แบบ Real-time เพื่อการตัดสินใจทางธุรกิจที่แม่นยำครับ",
-                args.interactive, args.pause
-            )
-            print("▶️ [ขั้นตอนที่ 7/7] (D5) Executive Analytics: ชมแดชบอร์ด 4 โมเดล Data Science (DFD 5.0)...")
-            login(page, base_url, "admin1", args.pause)
-            click_menu(page, "แดชบอร์ดวิเคราะห์", args.pause)
-
-            # 7.1 Lead Scoring
-            set_hud(page, "ขั้นตอนที่ 7/7 [1/4]", "Data Science: AI Lead Scoring", "ทำนายโอกาสปิดการขายด้วย Random Forest (AUC > 0.80)")
-            click_tab(page, "Lead Scoring", args.pause)
-            time.sleep(args.pause * 1.5)
-
-            # 7.2 RFM Segmentation
-            set_hud(page, "ขั้นตอนที่ 7/7 [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค้า Recency, Frequency, Monetary (Champions vs At Risk)")
-            click_tab(page, "RFM Segmentation", args.pause)
-            time.sleep(args.pause * 1.5)
-
-            # 7.3 Churn & Health
-            set_hud(page, "ขั้นตอนที่ 7/7 [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค้าตีจากด้วยดัชนีสุขภาพ 5 มิติ (รวมคะแนนบริการจาก Step 6)")
-            click_tab(page, "Customer Health & Churn", args.pause)
-            time.sleep(args.pause * 1.5)
-
-            # 7.4 Campaign ROI
-            set_hud(page, "ขั้นตอนที่ 7/7 [4/4]", "Data Science: Campaign ROI Analytics", "วิเคราะห์อัตราผลตอบแทนแคมเปญ (CMP003 ROI สูงสุด 103%)")
-            click_tab(page, "Campaign ROI", args.pause)
-            time.sleep(args.pause * 1.5)
-
-            # 7.5 Sales Summary Report
-            set_hud(page, "ขั้นตอนที่ 7/7 [สรุป]", "Process 5.2: รายงานสรุปยอดขาย", "รายงานสรุปยอดขายตามมิติต่างๆ สำหรับผู้บริหาร")
-            click_tab(page, "รายงานสรุปยอดขาย", args.pause)
-            time.sleep(args.pause * 1.5)
-
-            set_hud(page, "🎉 สำเร็จครบ 100%", "Smart CRM Analytics Live Demo", "สาธิตกระบวนการจริง D1-D5 ครบถ้วน 3 เคสธุรกิจ 7 ขั้นตอน")
-
-            print("\n" + "=" * 70)
-            print("🎉  การสาธิตสดเสร็จสิ้นสมบูรณ์ 100% ครบทั้ง 7 ขั้นตอน!")
-            print("    1. (D1) Portal: ผู้สนใจลงทะเบียนใหม่")
-            print("    2. (D1, D2) Marketing: เชื่อมโยงแคมเปญ CMP003")
-            print("    3. (D2, D3) Sales: AI Lead Scoring -> ออกใบเสนอราคา")
-            print("    4. (D3) Portal: ลูกค้ายืนยันคำสั่งซื้อ")
-            print("    5. (D3, D4) Sales: ตรวจรับเงิน -> ยกระดับเป็น Customer")
-            print("    6. (D4) Support: แชทแก้ไขปัญหา -> ปิดเคส -> CSAT 5 ดาว")
-            print("    7. (D5) Executive: แดชบอร์ด 4 โมเดล Data Science")
-            print("=" * 70)
+            print("\n" + "=" * 78)
+            print(f"🎉  การสาธิตสดเสร็จสิ้นสมบูรณ์ 100% ครบทั้ง {total_steps} ขั้นตอน!")
+            print("=" * 78)
 
             if not args.headless and args.keep_open:
                 print("\n💡 หน้าต่างเบราว์เซอร์ยังคงเปิดอยู่เพื่อให้คุณหรืออาจารย์ทดลองคลิกดูได้")
