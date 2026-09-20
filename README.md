@@ -122,7 +122,24 @@ python -m playwright install chromium   # จำเป็นสำหรับ�
 | **Playwright Real UI E2E** | `tests/e2e/test_quotation_form_e2e.py` | ขับเบราว์เซอร์ Chromium จริงเพื่อทดสอบฟอร์มออกใบเสนอราคา (Process 2.3) เลือกสินค้าแบบ multiselect, ตรวจสอบการคำนวณส่วนลดอัตโนมัติบนหน้าจอ, และยืนยันการบันทึกสถานะ `ออกใบเสนอราคาแล้ว` ลงตาราง `SALE` | `pytest tests/e2e/test_quotation_form_e2e.py -v` |
 | **Index & Query Benchmark** | `scripts/benchmark_index_usage.py` | รัน `EXPLAIN QUERY PLAN` วิเคราะห์การทำงานของ B-Tree Index บน 7 Query หลักของระบบ และสรุปรายงานที่ `docs/INDEX_QUERY_PLAN_REPORT.md` | `python scripts/benchmark_index_usage.py` |
 
-### 3. รันชุดทดสอบทั้งหมด (Quick Commands)
+### 3. รันการสาธิตระบบสดผ่านเบราว์เซอร์จริง (Real UI Live Demo)
+
+สคริปต์อัตโนมัติสำหรับเปิดเบราว์เซอร์ Chromium จริงบนหน้าจอ แสดงการทำงานแบบก้าวหน้าทีละขั้นตอน (Slow-Mo) พร้อมคำบรรยาย Floating HUD Subtitle บนหัวเว็บ ครอบคลุมทั้ง 3 เคสธุรกิจ 7 ขั้นตอน (DFD Process 1.0 - 5.0, D1 - D5):
+
+* **โหมดสั่ง Next ทีละสเต็ป (Interactive Step-by-Step — แนะนำสำหรับการนำเสนอสด):**
+  ```bash
+  python scripts/live_browser_demo.py --step
+  ```
+  *(ระบบจะหยุดรอให้ผู้กด `[Enter]` ใน Terminal ก่อนเริ่มดำเนินการในแต่ละขั้นตอน พร้อมแสดงบทพูดแนะนำสำหรับบรรยายให้อาจารย์ฟัง)*
+
+* **โหมดเล่นสดอัตโนมัติต่อเนื่อง (Auto Play Mode):**
+  ```bash
+  python scripts/live_browser_demo.py
+  # ปรับความเร็วได้ตามต้องการ เช่น:
+  python scripts/live_browser_demo.py --slow-mo 800 --pause 1.0
+  ```
+
+### 4. รันชุดทดสอบทั้งหมด (Quick Commands)
 
 * **รันชุดทดสอบมาตรฐานทั้งหมด (53 เทสต์ — เร็ว ไม่เปิดเบราว์เซอร์):**
   ```bash
@@ -147,7 +164,7 @@ python -m playwright install chromium   # จำเป็นสำหรับ�
   ```
   *(ผลลัพธ์จะถูกบันทึกเป็นรูปภาพใน `docs/evidence/*.png` และสร้างเอกสาร `docs/evidence/README.md`)*
 
-### 4. ทดสอบรันและดูผลลัพธ์ชั้น Analytics เดี่ยวๆ (ไม่ต้องเปิดแอป)
+### 5. ทดสอบรันและดูผลลัพธ์ชั้น Analytics เดี่ยวๆ (ไม่ต้องเปิดแอป)
 
 ```bash
 python -m analytics.lead_scoring          # ทดสอบเทรน Random Forest & Logistic Regression

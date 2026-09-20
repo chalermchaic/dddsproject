@@ -1,6 +1,6 @@
 # ⚡ รายงานผลการทดสอบ Query Plan และ Index Benchmark
 
-> **วันที่จัดทำ:** 2026-09-20 22:14:04  
+> **วันที่จัดทำ:** 2026-09-20 23:01:10  
 > **ฐานข้อมูล:** `db/crm.db` (SQLite 3)  
 > **วัตถุประสงค์:** ตรวจสอบการเรียกใช้งาน B-Tree Index ของระบบฐานข้อมูลใน Query หลักของ Data Science และ Dashboard ตามแผนทดสอบข้อ 2.3
 
@@ -67,9 +67,9 @@ SELECT * FROM V_SERVICE_HEALTH;
 ```
 
 ✅ **Index Usage Status:** มีการเรียกใช้งาน Index อย่างมีประสิทธิภาพ:
+- `SCAN TICKET USING INDEX idx_ticket_cust`
 - `SCAN t USING INDEX idx_ticket_cust`
 - `SEARCH m USING INDEX idx_msg_ticket (Ticket_ID=?)`
-- `SCAN TICKET USING INDEX idx_ticket_cust`
 - `SCAN cu USING COVERING INDEX sqlite_autoindex_CUSTOMER_1`
 
 ---
@@ -112,12 +112,12 @@ SELECT  r.Customer_ID, r.Customer_Type, r.Recency_Days, r.Frequency, r.Monetary,
 ```
 
 ✅ **Index Usage Status:** มีการเรียกใช้งาน Index อย่างมีประสิทธิภาพ:
-- `SCAN cu USING COVERING INDEX sqlite_autoindex_CUSTOMER_1`
-- `SEARCH cu USING INDEX sqlite_autoindex_CUSTOMER_1 (Customer_ID=?)`
-- `SEARCH m USING INDEX idx_msg_ticket (Ticket_ID=?)`
-- `SCAN TICKET USING INDEX idx_ticket_cust`
 - `SEARCH cu USING INDEX sqlite_autoindex_CUSTOMER_2 (Lead_ID=?)`
+- `SEARCH m USING INDEX idx_msg_ticket (Ticket_ID=?)`
+- `SEARCH cu USING INDEX sqlite_autoindex_CUSTOMER_1 (Customer_ID=?)`
+- `SCAN TICKET USING INDEX idx_ticket_cust`
 - `SCAN t USING INDEX idx_ticket_cust`
+- `SCAN cu USING COVERING INDEX sqlite_autoindex_CUSTOMER_1`
 
 ---
 
@@ -142,8 +142,8 @@ SELECT * FROM V_LEAD_FEATURES;
 
 ✅ **Index Usage Status:** มีการเรียกใช้งาน Index อย่างมีประสิทธิภาพ:
 - `SEARCH c USING INDEX sqlite_autoindex_CAMPAIGN_1 (Campaign_ID=?) LEFT-JOIN`
-- `SEARCH a USING INDEX idx_act_lead (Lead_ID=?) LEFT-JOIN`
 - `SEARCH l USING INDEX idx_lead_status (Followup_Status=?)`
+- `SEARCH a USING INDEX idx_act_lead (Lead_ID=?) LEFT-JOIN`
 
 ---
 
@@ -168,8 +168,8 @@ SELECT * FROM V_CAMPAIGN_ROI;
 
 ✅ **Index Usage Status:** มีการเรียกใช้งาน Index อย่างมีประสิทธิภาพ:
 - `SCAN c USING INDEX sqlite_autoindex_CAMPAIGN_1`
-- `SEARCH l USING INDEX idx_lead_campaign (Campaign_ID=?) LEFT-JOIN`
 - `SEARCH s USING INDEX idx_sale_lead (Lead_ID=?) LEFT-JOIN`
+- `SEARCH l USING INDEX idx_lead_campaign (Campaign_ID=?) LEFT-JOIN`
 
 ---
 
