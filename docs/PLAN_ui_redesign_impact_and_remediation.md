@@ -196,6 +196,14 @@
    * เทียบกับ [`tests/e2e/capture_manual_evidence.py`](file:///c:/Users/momo/dev/dddsproject/tests/e2e/capture_manual_evidence.py) ที่กำหนด `viewport={"width": 1440, "height": 900}` ชัดเจน จึงแสดงผลปกติ ไม่ล้นจอ
    * แก้ไขโดยตัด `no_viewport=True` ออก และบังคับ `viewport={"width": 1440, "height": 900}` พร้อม `--window-size=1460,940` ใน `live_browser_demo.py` เพื่อให้ Chromium แสดงผลเหมือนกับตอน capture และเบราว์เซอร์ปกติ 100%
 
+### เฟส 8: ปรับขนาด Floating HUD ให้กะทัดรัด ไม่ดันหน้าจอล้น พร้อมคลีน Unicode ภาษาไทย (สำเร็จ ✅)
+1. **สาเหตุของบับเบิลที่ทำให้หน้าจอล้น (HUD Overflow Impact):** ตัวแถบ Floating HUD บรรจุข้อความบทพูดนำเสนอขนาดยาวแบบแนวนอน ส่งผลให้ความกว้างของตัว HUD ขยายตัวมากกว่า 1,800px ทะลุขอบขวาของหน้าต่างเบราว์เซอร์ออกไป การที่มีองค์ประกอบยื่นทะลุขอบขวาของหน้าต่างจะไปบังคับให้ `document.body` ขยายขนาดตามและเกิด Horizontal Scrollbar ซึ่งส่งผลกระทบต่อเนื่องทำให้การ์ดคอลัมน์ของ Streamlit (เช่น งบประมาณรวม ในหน้า Marketing) ถูกดันตกขอบจอไปด้วย
+2. **การปรับปรุง:**
+   * ปรับขนาด HUD ให้เป็น Floating Pill สวยงาม กะทัดรัด กว้างไม่เกิน `min(820px, calc(100vw - 32px))`
+   * จัดการตัดข้อความยาวด้วย `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` โดยเก็บข้อความเต็มไว้ใน Tooltip (`title`) ให้ชี้เมาส์อ่านได้
+   * บังคับ `document.body.style.overflowX = 'hidden'` ตัดปัญหาการเกิด Scrollbar แนวนอน 100%
+   * แปลงรหัสวรรณยุกต์ภาษาไทยโบราณ (PUA Mac/Windows) ทั้ง 48 จุดใน [`scripts/live_browser_demo.py`](file:///c:/Users/momo/dev/dddsproject/scripts/live_browser_demo.py) ให้เป็นรหัส UTF-8 ภาษาไทยมาตรฐานทั้งหมด แก้ไขปัญหากล่องสี่เหลี่ยมผิดเพี้ยน
+
 ---
 
 ## ✅ เกณฑ์การยอมรับงาน (Acceptance Criteria / Definition of Done)
@@ -204,6 +212,8 @@
 * [x] สคริปต์ `scripts/live_browser_demo.py` รันผ่านฉลุยทั้งแบบ 7 ขั้นตอน และ 18 ขั้นตอน โดยไม่เกิด Selector Timeout
 * [x] รองรับการนำเสนอสดแบบจอเดียว (Single Screen) คลิกปุ่มหรือเคาะ Spacebar บนหน้าต่างเบราว์เซอร์ได้ทันที ไม่ต้องสลับไปกดที่ Terminal
 * [x] ขนาดหน้าต่างและ Viewport ใน `live_browser_demo.py` เป็น 1440x900 เท่ากับตอน capture ไม่เกิดปัญหาฝั่งขวาล้นจอ และเห็นปุ่ม Logout ด้านล่างชัดเจน
+* [x] แถบ Floating HUD มีขนาดกะทัดรัด (Compact Pill) ไม่ยื่นทะลุขอบขวาและไม่ก่อให้เกิดการดันเลย์เอาต์หน้าเว็บ
+* [x] รหัสตัวอักษรภาษาไทยในสคริปต์ถูกต้องตามมาตรฐาน ไม่แสดงสัญลักษณ์กล่องสี่เหลี่ยม
 * [x] ภาพในโฟลเดอร์ `docs/evidence/` ทั้ง 27 รูปได้รับการอัปเดตเป็นธีมใหม่อย่างสมบูรณ์
 * [x] เอกสารคู่มือผู้ใช้ `docs/user_manual.md` เป็น Source of Truth ฉบับสมบูรณ์
 * [x] ลบไฟล์และสคริปต์สร้าง `user_manual.docx/.pdf`, `demo.pptx/.pdf`, `Precision_AI_CRM.pptx/.pdf` ออกจากโปรเจกต์เรียบร้อย
