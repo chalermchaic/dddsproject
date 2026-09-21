@@ -89,7 +89,7 @@ st.markdown("""
       position: fixed; top: 0; left: 0; width: 21rem; z-index: 20;
       padding: 1rem 1rem 0 1rem; background-color: #171B26;
   }
-  [data-testid="stSidebarNav"] { margin-top: 215px; }
+  [data-testid="stSidebarNav"] { margin-top: 168px; }
   /* ปุ่ม "ออกจากระบบ" (มาร์กด้วย .sidebar-logout-marker) ปักไว้ล่างสุดของ sidebar เสมอ ไม่ต้องเลื่อนหา */
   [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlockBorderWrapper"]:has(.sidebar-logout-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .sidebar-logout-marker)) {
       position: fixed; bottom: 0; left: 0; width: 21rem; z-index: 20;

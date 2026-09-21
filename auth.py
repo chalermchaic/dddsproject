@@ -213,9 +213,6 @@ def sidebar_header(app_version: str = "") -> None:
                 st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
                 st.markdown(f"👤 **{u['name']}**")
                 st.caption(f"{ROLE_TH.get(u['role'], u['role'])} ({display_username(u['username'])})")
-                if st.button("🚪 ออกจากระบบ", key="header_logout_btn", use_container_width=True):
-                    logout()
-                    st.rerun()
 
 
 def sidebar_footer(app_version: str = "") -> None:
