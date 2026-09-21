@@ -18,6 +18,7 @@ scripts/live_browser_demo.py
 """
 
 import argparse
+import json
 import os
 import re
 import socket
@@ -26,6 +27,11 @@ import sys
 import time
 import urllib.request
 from playwright.sync_api import sync_playwright
+
+try:
+    import msvcrt
+except ImportError:
+    msvcrt = None
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -52,8 +58,16 @@ def get_free_port() -> int:
     return p
 
 
-def set_hud(page, badge: str, title: str, desc: str):
-    """แสดง Floating HUD Subtitle ด้านบนของหน้าต่างเบราว์เซอร์เพื่อเป็นคำบรรยายสำหรับผู้ชม"""
+def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False):
+    """แสดง Floating HUD Subtitle ด้านบนของหน้าต่างเบราว์เซอร์เพื่อเป็นคำบรรยายสำหรับผู้ชม
+
+    รองรับปุ่ม Next บนหน้าจอ และ Event Listener ให้เคาะ Space/Enter บนหน้าเว็บเพื่อไปต่อได้ทันที
+    """
+    badge_json = json.dumps(badge, ensure_ascii=False)
+    title_json = json.dumps(title, ensure_ascii=False)
+    desc_json = json.dumps(desc, ensure_ascii=False)
+    btn_flag = "true" if show_next_btn else "false"
+
     js = f"""
     (() => {{
         let el = document.getElementById('live-demo-hud');
@@ -61,30 +75,81 @@ def set_hud(page, badge: str, title: str, desc: str):
             el = document.createElement('div');
             el.id = 'live-demo-hud';
             el.style.position = 'fixed';
-            el.style.top = '14px';
+            el.style.top = '12px';
             el.style.left = '50%';
             el.style.transform = 'translateX(-50%)';
-            el.style.zIndex = '9999999';
-            el.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+            el.style.zIndex = '99999999';
+            el.style.backgroundColor = 'rgba(15, 23, 42, 0.94)';
             el.style.color = '#ffffff';
-            el.style.padding = '10px 24px';
+            el.style.padding = '8px 22px';
             el.style.borderRadius = '32px';
-            el.style.boxShadow = '0 12px 35px rgba(0,0,0,0.45)';
+            el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.25)';
             el.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
             el.style.fontSize = '14px';
-            el.style.border = '1.5px solid rgba(56, 189, 248, 0.5)';
-            el.style.backdropFilter = 'blur(10px)';
-            el.style.pointerEvents = 'none';
-            el.style.transition = 'all 0.3s ease-in-out';
+            el.style.border = '1.5px solid rgba(56, 189, 248, 0.6)';
+            el.style.backdropFilter = 'blur(12px)';
+            el.style.pointerEvents = 'auto';
+            el.style.transition = 'all 0.25s ease-in-out';
             el.style.textAlign = 'center';
-            el.style.maxWidth = '90vw';
+            el.style.maxWidth = '92vw';
+            el.style.display = 'flex';
+            el.style.alignItems = 'center';
+            el.style.justifyContent = 'center';
+            el.style.gap = '8px';
+            el.style.userSelect = 'none';
             document.body.appendChild(el);
+
+            if (!window.__DEMO_KEY_BOUND__) {{
+                window.__DEMO_KEY_BOUND__ = true;
+                window.addEventListener('keydown', (e) => {{
+                    const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+                    if (tag !== 'input' && tag !== 'textarea') {{
+                        if (e.code === 'Space' || e.key === 'Enter' || e.key === 'ArrowRight') {{
+                            e.preventDefault();
+                            window.__DEMO_NEXT__ = true;
+                        }}
+                    }}
+                }}, true);
+            }}
         }}
+
+        const badgeText = {badge_json};
+        const titleText = {title_json};
+        const descText = {desc_json};
+        const showBtn = {btn_flag};
+
+        let btnHtml = '';
+        if (showBtn) {{
+            btnHtml = `
+                <button id="live-demo-next-btn" style="
+                    background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+                    color: #ffffff;
+                    border: 1.5px solid #38bdf8;
+                    padding: 4px 16px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    box-shadow: 0 4px 14px rgba(37,99,235,0.45);
+                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                    white-space: nowrap;
+                    margin-left: 6px;
+                    outline: none;
+                " onmouseover="this.style.transform='scale(1.05)';"
+                   onmouseout="this.style.transform='scale(1)';"
+                   onclick="window.__DEMO_NEXT__ = true;">
+                    ⏭️ ถัดไป (Space/คลิก)
+                </button>
+            `;
+        }}
+
         el.innerHTML = `
-            <span style="background: #0284c7; color: #fff; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; margin-right: 8px;">{badge}</span>
-            <strong style="color: #38bdf8; font-size: 15px;">{title}</strong>
-            <span style="color: #cbd5e1; margin-left: 8px; font-weight: normal;">| {desc}</span>
+            <span style="background: #0284c7; color: #fff; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; white-space: nowrap;">${{badgeText}}</span>
+            <strong style="color: #38bdf8; font-size: 14px; white-space: nowrap;">${{titleText}}</strong>
+            <span style="color: #cbd5e1; font-weight: normal; font-size: 13px; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">| ${{descText}}</span>
+            ${{btnHtml}}
         `;
+        window.__DEMO_NEXT__ = false;
     }})();
     """
     try:
@@ -139,21 +204,59 @@ def click_tab(page, tab_name: str, step_pause: float = 1.0):
 
 
 def wait_next_step(page, step_num: int, total_steps: int, step_name: str, talk_point: str, interactive: bool = False, pause: float = 1.0):
-    """ฟังก์ชันหยุดรอคำสั่งกด Enter หรือเล่นต่ออัตโนมัติ พร้อมแสดงบทพูดแนะนำ"""
+    """ฟังก์ชันหยุดรอคำสั่งกด Enter หรือเล่นต่ออัตโนมัติ พร้อมแสดงบทพูดแนะนำ
+
+    รองรับการควบคุมบนจอเดียว (Single Screen) สมบูรณ์แบบ:
+      1. คลิกปุ่ม [⏭️ ถัดไป] บน Floating HUD ที่หัวเว็บ
+      2. เคาะ Spacebar หรือ Enter บนหน้าเว็บเบราว์เซอร์
+      3. กด [Enter] ใน Terminal (ถ้ามี 2 จอ) หรือกด 'q' เพื่อออก
+    """
     if interactive:
-        set_hud(page, f"สเต็ปที่ {step_num}/{total_steps} [รอสั่ง Next ⏭️]", step_name, "กด [Enter] ใน Terminal เพื่อสั่งให้เบราว์เซอร์คลิกทำขั้นตอนนี้...")
+        set_hud(
+            page,
+            badge=f"สเต็ป {step_num}/{total_steps} [รอสั่ง Next ⏭️]",
+            title=step_name,
+            desc=f"🗣️ {talk_point}",
+            show_next_btn=True
+        )
         print("\n" + "━" * 78)
         print(f"⏸️  [ขั้นตอนที่ {step_num}/{total_steps}] {step_name}")
         print(f"🗣️  บทพูดนำเสนอ: \"{talk_point}\"")
-        print(f"👉 กด [Enter] เพื่อสั่งให้เบราว์เซอร์เริ่มทำขั้นตอนนี้ (หรือพิมพ์ q เพื่อหยุด): ", end="", flush=True)
-        try:
-            cmd = input()
-            if cmd.strip().lower() == "q":
-                print("🛑 ผู้ใช้ออกจากโปรแกรม")
-                sys.exit(0)
-        except (KeyboardInterrupt, EOFError):
-            print("\n🛑 ผู้ใช้ออกจากโปรแกรม")
-            sys.exit(0)
+        print("👉 สั่ง Next: 1) คลิก [⏭️ ถัดไป] บนจอ | 2) เคาะ Spacebar บนเว็บ | 3) กด [Enter] ใน Terminal: ", end="", flush=True)
+
+        while True:
+            # 1. ตรวจสอบการคลิกปุ่มหรือกดปุ่มคีย์บอร์ดบนหน้าจอเบราว์เซอร์
+            try:
+                clicked = page.evaluate("() => { if (window.__DEMO_NEXT__) { window.__DEMO_NEXT__ = false; return true; } return false; }")
+                if clicked:
+                    print(" [⏭️ Next จาก Browser!]")
+                    break
+            except Exception:
+                pass
+
+            # 2. ตรวจสอบการกดปุ่มใน Terminal บน Windows แบบ Non-blocking
+            try:
+                if msvcrt and msvcrt.kbhit():
+                    ch = msvcrt.getwch()
+                    if ch in ('\r', '\n', ' '):
+                        print(" [⏎ Next จาก Terminal!]")
+                        break
+                    elif ch.lower() == 'q':
+                        print("\n🛑 ผู้ใช้ออกจากโปรแกรม")
+                        sys.exit(0)
+            except Exception:
+                pass
+
+            page.wait_for_timeout(100)
+
+        # เปลี่ยนสถานะ HUD เป็นกำลังรันขั้นตอน
+        set_hud(
+            page,
+            badge=f"กำลังรัน {step_num}/{total_steps} ⚙️",
+            title=step_name,
+            desc="ระบบกำลังดำเนินการอัตโนมัติ...",
+            show_next_btn=False
+        )
     else:
         time.sleep(pause)
 
@@ -1183,7 +1286,7 @@ def run_slide_all(page, base_url: str, args):
 def run_live_demo():
     parser = argparse.ArgumentParser(description="Smart CRM Analytics - Live Browser Demo")
     parser.add_argument("-s", "--step", "--interactive", dest="interactive", action="store_true",
-                        help="โหมดสั่ง Next ทีละสเต็ป: หยุดรอให้กด [Enter] ก่อนเริ่มทำแต่ละขั้นตอน")
+                        help="โหมดสั่ง Next ทีละสเต็ป: รองรับคลิกปุ่ม [⏭️ ถัดไป] บนจอ, เคาะ Spacebar บนเว็บ, หรือกด [Enter] ใน Terminal")
     parser.add_argument("--scenario", "--flow", dest="scenario", default="standard",
                         choices=[
                             "standard", "full", "grand",
@@ -1225,7 +1328,7 @@ def run_live_demo():
     print("🎬  SMART CRM ANALYTICS — REAL UI LIVE DEMO")
     print(f"    🌟 SCENARIO: {sc_name}")
     if args.interactive:
-        print(f"    🕹️  โหมด: INTERACTIVE STEP-BY-STEP (กด [Enter] เพื่อสั่ง Next ทีละ {total_steps} ขั้น)")
+        print(f"    🕹️  โหมด: SINGLE-SCREEN STEP-BY-STEP (คลิก [⏭️ ถัดไป] บนจอ หรือเคาะ Spacebar ได้เลย ไม่ต้องสลับหน้าต่าง)")
     else:
         print("    ⚡ โหมด: AUTO PLAY (เล่นต่อเนื่องตามความเร็ว Slow-Mo)")
     print("=" * 78)
