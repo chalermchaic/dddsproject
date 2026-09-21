@@ -75,29 +75,31 @@ def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False
             el = document.createElement('div');
             el.id = 'live-demo-hud';
             el.style.position = 'fixed';
-            el.style.top = '12px';
+            el.style.top = '10px';
             el.style.left = '50%';
             el.style.transform = 'translateX(-50%)';
             el.style.zIndex = '99999999';
-            el.style.backgroundColor = 'rgba(15, 23, 42, 0.94)';
+            el.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
             el.style.color = '#ffffff';
-            el.style.padding = '8px 22px';
-            el.style.borderRadius = '32px';
-            el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.25)';
+            el.style.padding = '6px 16px';
+            el.style.borderRadius = '30px';
+            el.style.boxShadow = '0 8px 25px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.25)';
             el.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            el.style.fontSize = '14px';
+            el.style.fontSize = '13px';
             el.style.border = '1.5px solid rgba(56, 189, 248, 0.6)';
             el.style.backdropFilter = 'blur(12px)';
             el.style.pointerEvents = 'auto';
-            el.style.transition = 'all 0.25s ease-in-out';
-            el.style.textAlign = 'center';
-            el.style.maxWidth = '92vw';
+            el.style.transition = 'all 0.2s ease-in-out';
+            el.style.maxWidth = 'min(820px, calc(100vw - 32px))';
+            el.style.boxSizing = 'border-box';
+            el.style.overflow = 'hidden';
             el.style.display = 'flex';
             el.style.alignItems = 'center';
-            el.style.justifyContent = 'center';
+            el.style.justifyContent = 'space-between';
             el.style.gap = '8px';
             el.style.userSelect = 'none';
             document.body.appendChild(el);
+            document.body.style.overflowX = 'hidden';
 
             if (!window.__DEMO_KEY_BOUND__) {{
                 window.__DEMO_KEY_BOUND__ = true;
@@ -125,28 +127,32 @@ def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False
                     background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
                     color: #ffffff;
                     border: 1.5px solid #38bdf8;
-                    padding: 4px 16px;
-                    border-radius: 20px;
-                    font-size: 13px;
+                    padding: 4px 14px;
+                    border-radius: 18px;
+                    font-size: 12px;
                     font-weight: 700;
                     cursor: pointer;
-                    box-shadow: 0 4px 14px rgba(37,99,235,0.45);
+                    box-shadow: 0 4px 12px rgba(37,99,235,0.45);
                     transition: transform 0.15s ease, box-shadow 0.15s ease;
                     white-space: nowrap;
+                    flex-shrink: 0;
                     margin-left: 6px;
                     outline: none;
                 " onmouseover="this.style.transform='scale(1.05)';"
                    onmouseout="this.style.transform='scale(1)';"
                    onclick="window.__DEMO_NEXT__ = true;">
-                    ⏭️ ถัดไป (Space/คลิก)
+                    ⏭️ ถัดไป (Space)
                 </button>
             `;
         }}
 
+        el.setAttribute('title', descText);
         el.innerHTML = `
-            <span style="background: #0284c7; color: #fff; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 12px; white-space: nowrap;">${{badgeText}}</span>
-            <strong style="color: #38bdf8; font-size: 14px; white-space: nowrap;">${{titleText}}</strong>
-            <span style="color: #cbd5e1; font-weight: normal; font-size: 13px; max-width: 48vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">| ${{descText}}</span>
+            <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;flex:1;">
+                <span style="background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 11px; white-space: nowrap; flex-shrink: 0;">${{badgeText}}</span>
+                <strong style="color: #38bdf8; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; flex-shrink: 0;">${{titleText}}</strong>
+                <span style="color: #94a3b8; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">| ${{descText}}</span>
+            </div>
             ${{btnHtml}}
         `;
         window.__DEMO_NEXT__ = false;
@@ -169,7 +175,7 @@ def login(page, base_url: str, username: str, step_pause: float = 1.0):
         page.wait_for_timeout(800)
 
     if username == "guest":
-        btn = page.get_by_role("button").filter(has_text=re.compile(r"ผู้สนใจ|ลูกค้า"))
+        btn = page.get_by_role("button").filter(has_text=re.compile(r"ผู้สนใจ|ลูกค่า"))
         if btn.count() > 0:
             btn.first.click()
     else:
@@ -278,7 +284,7 @@ def select_dropdown_option(page, label_regex: str, option_query: str):
 
 
 def select_portal_identity(page, query_text: str):
-    """ช่วยเลือกตัวตนผู้สนใจ/ลูกค้าในหน้า Customer Portal"""
+    """ช่วยเลือกตัวตนผู้สนใจ/ลูกค่าในหน้า Customer Portal"""
     p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
     if p_sel.count() > 0 and p_sel.is_visible():
         p_sel.click()
@@ -355,7 +361,7 @@ def run_standard_tour(page, base_url: str, args):
     click_tab(page, "ค้นหา & บันทึกกิจกรรม", args.pause)
     act_note = page.get_by_label("บันทึกผลการติดต่อ")
     if act_note.is_visible():
-        act_note.fill("โทรติดต่อเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับใบเสนอราคาพร้อมส่วนลดแคมเปญ")
+        act_note.fill("โทรติดต่อเสนอโซลูชัน Cloud ERP ลูกค่าพอใจมาก ตกลงรับใบเสนอราคาพร้อมส่วนลดแคมเปญ")
     save_act = page.get_by_role("button", name=re.compile("บันทึก")).first
     if save_act.is_visible():
         save_act.click()
@@ -364,7 +370,7 @@ def run_standard_tour(page, base_url: str, args):
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "ออกใบเสนอราคา", args.pause)
 
-    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
+    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค่า").first
     if not ms.is_visible():
         ms = page.locator("div[data-testid='stMultiSelect']").first
     if ms.is_visible():
@@ -391,13 +397,13 @@ def run_standard_tour(page, base_url: str, args):
     # STEP 4: (D3) Portal Order
     wait_next_step(
         page, 4, total_steps,
-        "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1 -> D3)",
-        "ลูกค้าตรวจดูใบเสนอราคาผ่าน Portal และกดยืนยันคำสั่งซื้อแบบ Self-service ส่งสถานะเข้าสู่ Process 3.1 ครับ",
+        "Portal: ลูกค่ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1 -> D3)",
+        "ลูกค่าตรวจดูใบเสนอราคาผ่าน Portal และกดยืนยันคำสั่งซื้อแบบ Self-service ส่งสถานะเข้าสู่ Process 3.1 ครับ",
         args.interactive, args.pause
     )
-    print("▶️ [ขั้นตอนที่ 4/7] (D3) Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1)...")
+    print("▶️ [ขั้นตอนที่ 4/7] (D3) Portal: ลูกค่ายืนยันคำสั่งซื้อตามใบเสนอราคา (DFD 3.1)...")
     login(page, base_url, "guest", args.pause)
-    set_hud(page, "ขั้นตอนที่ 4/7", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค้ายืนยันการสั่งซื้อผ่านพอร์ทัล (Process 3.1 -> อัปเดตสถานะใน D3)")
+    set_hud(page, "ขั้นตอนที่ 4/7", "Portal: ยืนยันคำสั่งซื้อ", "ลูกค่ายืนยันการสั่งซื้อผ่านพอร์ทัล (Process 3.1 -> อัปเดตสถานะใน D3)")
 
     click_tab(page, "โปรโมชัน & ใบเสนอราคา", args.pause)
     click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
@@ -405,7 +411,7 @@ def run_standard_tour(page, base_url: str, args):
     if confirm_btn.is_visible():
         confirm_btn.click()
         page.wait_for_timeout(1500)
-        print("    ✅ ลูกค้ายืนยันคำสั่งซื้อเรียบร้อย")
+        print("    ✅ ลูกค่ายืนยันคำสั่งซื้อเรียบร้อย")
     else:
         print("    ℹ️ รายการคำสั่งซื้ออยู่ในสถานะพร้อมตรวจรับ")
 
@@ -423,14 +429,14 @@ def run_standard_tour(page, base_url: str, args):
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
     click_tab(page, "ตรวจสอบการชำระเงิน", args.pause)
-    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
+    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค่า", args.pause)
     print("    ✅ ยกระดับข้อมูลเป็น CUSTOMER และสร้างใบเสร็จรับเงินในระบบเรียบร้อย")
 
     # STEP 6: (D4) Support & CSAT
     wait_next_step(
         page, 6, total_steps,
-        "Support: แชทบริการลูกค้า, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3 -> D4)",
-        "บริการหลังการขาย เจ้าหน้าที่ประสานงานผ่านแชทสดสองทาง เมื่อปิดเคส ลูกค้าประเมิน 5 ดาว ช่วยฟื้นฟู Health Score ของลูกค้าครับ",
+        "Support: แชทบริการลูกค่า, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3 -> D4)",
+        "บริการหลังการขาย เจ้าหน้าที่ประสานงานผ่านแชทสดสองทาง เมื่อปิดเคส ลูกค่าประเมิน 5 ดาว ช่วยฟื้นฟู Health Score ของลูกค่าครับ",
         args.interactive, args.pause
     )
     print("▶️ [ขั้นตอนที่ 6/7] (D4) Support & CSAT: เปิดเคสแจ้งปัญหา, แชทสด, ปิดเคส & ประเมิน 5 ดาว (DFD 4.1 - 4.3)...")
@@ -459,7 +465,7 @@ def run_standard_tour(page, base_url: str, args):
     if rate_btn.is_visible():
         rate_btn.click()
         page.wait_for_timeout(1200)
-    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ ส่งผลบวกต่อ Health Score ของลูกค้า")
+    print("    ✅ บันทึกคะแนน CSAT 5 ดาว ⭐⭐⭐⭐⭐ ส่งผลบวกต่อ Health Score ของลูกค่า")
 
     # STEP 7: (D5) Executive Analytics
     wait_next_step(
@@ -476,11 +482,11 @@ def run_standard_tour(page, base_url: str, args):
     click_tab(page, "Lead Scoring", args.pause)
     time.sleep(args.pause * 1.5)
 
-    set_hud(page, "ขั้นตอนที่ 7/7 [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค้า Recency, Frequency, Monetary (Champions vs At Risk)")
+    set_hud(page, "ขั้นตอนที่ 7/7 [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค่า Recency, Frequency, Monetary (Champions vs At Risk)")
     click_tab(page, "RFM Segmentation", args.pause)
     time.sleep(args.pause * 1.5)
 
-    set_hud(page, "ขั้นตอนที่ 7/7 [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค้าตีจากด้วยดัชนีสุขภาพ 5 มิติ (รวมคะแนนบริการจาก Step 6)")
+    set_hud(page, "ขั้นตอนที่ 7/7 [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค่าตีจากด้วยดัชนีสุขภาพ 5 มิติ (รวมคะแนนบริการจาก Step 6)")
     click_tab(page, "Customer Health & Churn", args.pause)
     time.sleep(args.pause * 1.5)
 
@@ -547,7 +553,7 @@ def run_grand_tour(page, base_url: str, args):
     time.sleep(args.pause)
     print("    ✅ ตรวจสอบแคมเปญพร้อมใช้งานครบถ้วน")
 
-    # 3. Process 1.2: Portal ลูกค้าลงทะเบียน
+    # 3. Process 1.2: Portal ลูกค่าลงทะเบียน
     wait_next_step(
         page, 3, total_steps,
         "Portal: ผู้สนใจลงทะเบียนขอข้อมูล (Process 1.2 -> ตาราง D1: LEAD)",
@@ -555,7 +561,7 @@ def run_grand_tour(page, base_url: str, args):
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 3/{total_steps}", "Portal: ผู้สนใจลงทะเบียนขอข้อมูล", "ลูกค้าลงทะเบียนความสนใจ ผูกกับแคมเปญการตลาด (Process 1.2 -> D1: LEAD)")
+    set_hud(page, f"ขั้นตอนที่ 3/{total_steps}", "Portal: ผู้สนใจลงทะเบียนขอข้อมูล", "ลูกค่าลงทะเบียนความสนใจ ผูกกับแคมเปญการตลาด (Process 1.2 -> D1: LEAD)")
     click_tab(page, "ลงทะเบียนความสนใจ", args.pause)
     page.get_by_label("ชื่อ-นามสกุล *").fill("คุณสมชาย หมายมั่น")
     page.get_by_label("เบอร์โทรศัพท์ *").fill("081-999-8888")
@@ -568,7 +574,7 @@ def run_grand_tour(page, base_url: str, args):
         page.wait_for_timeout(1500)
     print("    ✅ บันทึก Lead ใหม่: 'คุณสมชาย หมายมั่น' เข้าตาราง D1: LEAD สำเร็จ")
 
-    # 4. Process 1.3: Portal ลูกค้าเปิดดูโปรโมชันที่ได้รับ
+    # 4. Process 1.3: Portal ลูกค่าเปิดดูโปรโมชันที่ได้รับ
     wait_next_step(
         page, 4, total_steps,
         "Portal: ตรวจสอบโปรโมชันและส่วนลดที่ได้รับ (Process 1.3)",
@@ -631,7 +637,7 @@ def run_grand_tour(page, base_url: str, args):
 
     act_n = page.get_by_label("บันทึกผลการติดต่อ")
     if act_n.is_visible():
-        act_n.fill("โทรนำเสนอโซลูชัน Cloud ERP ลูกค้าพอใจมาก ตกลงรับข้อเสนอใบเสนอราคาพร้อมส่วนลด 15%")
+        act_n.fill("โทรนำเสนอโซลูชัน Cloud ERP ลูกค่าพอใจมาก ตกลงรับข้อเสนอใบเสนอราคาพร้อมส่วนลด 15%")
     s_act = page.get_by_role("button", name=re.compile("บันทึก")).first
     if s_act.is_visible():
         s_act.click()
@@ -642,10 +648,10 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 7, total_steps,
         "Sales: ออกใบเสนอราคา (Quotation) (Process 2.3 -> D3: SALE & SALE_DETAIL)",
-        "ฝ่ายขายออกใบเสนอราคาให้ 'คุณสมชาย หมายมั่น' โดยเลือกสินค้าหลายรายการ ระบบหักลดส่วนลดแคมเปญอัตโนมัติครับ",
+        "ฝ่ายขายออกใบเสนอราคาให้ 'คุณสมชาย หมายมั่น' โดยเลือกสินค่าหลายรายการ ระบบหักลดส่วนลดแคมเปญอัตโนมัติครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 7/{total_steps}", "Sales: ออกใบเสนอราคา", "เลือกคุณสมชาย หมายมั่น และสินค้าแบบ Multiselect ออกเลขที่ QT (Process 2.3 -> D3)")
+    set_hud(page, f"ขั้นตอนที่ 7/{total_steps}", "Sales: ออกใบเสนอราคา", "เลือกคุณสมชาย หมายมั่น และสินค่าแบบ Multiselect ออกเลขที่ QT (Process 2.3 -> D3)")
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "ออกใบเสนอราคา", args.pause)
     # เลือกคุณสมชายใน dropdown ผู้สนใจ
@@ -658,7 +664,7 @@ def run_grand_tour(page, base_url: str, args):
             q_opt.click()
             page.wait_for_timeout(600)
 
-    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
+    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค่า").first
     if not ms.is_visible():
         ms = page.locator("div[data-testid='stMultiSelect']").first
     if ms.is_visible():
@@ -681,15 +687,15 @@ def run_grand_tour(page, base_url: str, args):
         page.wait_for_timeout(2000)
     print("    ✅ ออกใบเสนอราคาสำเร็จ (บันทึกข้อมูลลงตาราง D3)")
 
-    # 8. Process 3.1: Portal ลูกค้ายืนยันคำสั่งซื้อ
+    # 8. Process 3.1: Portal ลูกค่ายืนยันคำสั่งซื้อ
     wait_next_step(
         page, 8, total_steps,
-        "Portal: ลูกค้ายืนยันคำสั่งซื้อตามใบเสนอราคา (Process 3.1 -> D3: SALE)",
+        "Portal: ลูกค่ายืนยันคำสั่งซื้อตามใบเสนอราคา (Process 3.1 -> D3: SALE)",
         "คุณสมชายตรวจสอบความถูกต้องของรายการและยอดเงิน แล้วกดยืนยันคำสั่งซื้อผ่าน Portal ครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 8/{total_steps}", "Portal: ยืนยันคำสั่งซื้อ", "คุณสมชายยืนยันสั่งซื้อสินค้าตามใบเสนอราคาแบบ Self-service (Process 3.1)")
+    set_hud(page, f"ขั้นตอนที่ 8/{total_steps}", "Portal: ยืนยันคำสั่งซื้อ", "คุณสมชายยืนยันสั่งซื้อสินค่าตามใบเสนอราคาแบบ Self-service (Process 3.1)")
     # เลือกตัวตนคุณสมชายใน Portal
     p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
     if p_sel.count() > 0 and p_sel.is_visible():
@@ -705,14 +711,14 @@ def run_grand_tour(page, base_url: str, args):
     if c_btn.is_visible():
         c_btn.click()
         page.wait_for_timeout(1500)
-        print("    ✅ ลูกค้ายืนยันคำสั่งซื้อเรียบร้อย")
+        print("    ✅ ลูกค่ายืนยันคำสั่งซื้อเรียบร้อย")
     else:
         print("    ℹ️ คำสั่งซื้ออยู่ในสถานะพร้อมตรวจรับ")
 
     # 9. Process 3.1: Sales รับ & ตรวจสอบคำสั่งซื้อ
     wait_next_step(
         page, 9, total_steps,
-        "Sales: ตรวจสอบคำสั่งซื้อของลูกค้า (Process 3.1)",
+        "Sales: ตรวจสอบคำสั่งซื้อของลูกค่า (Process 3.1)",
         "ฝ่ายขายตรวจรับคำสั่งซื้อที่คุณสมชายยืนยันเข้ามา เพื่อส่งต่อไปยังขั้นตอนการชำระเงินครับ",
         args.interactive, args.pause
     )
@@ -753,18 +759,18 @@ def run_grand_tour(page, base_url: str, args):
         "ระบบปิดการขาย ออกใบเสร็จรับเงิน และยกระดับสถานะคุณสมชายจาก Lead เข้าสู่ตาราง D4: CUSTOMER ทันทีครับ",
         args.interactive, args.pause
     )
-    set_hud(page, f"ขั้นตอนที่ 11/{total_steps}", "Sales: ออกใบเสร็จ & ยกระดับลูกค้า", "ออกใบเสร็จรับเงิน และยกระดับคุณสมชายเข้าสู่ตาราง D4: CUSTOMER (Process 3.3)")
-    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 11/{total_steps}", "Sales: ออกใบเสร็จ & ยกระดับลูกค่า", "ออกใบเสร็จรับเงิน และยกระดับคุณสมชายเข้าสู่ตาราง D4: CUSTOMER (Process 3.3)")
+    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค่า", args.pause)
     r_btn = page.get_by_role("button", name=re.compile("ออกใบเสร็จ")).first
     if r_btn.count() > 0 and r_btn.is_visible():
         r_btn.click()
         page.wait_for_timeout(1500)
     print("    ✅ ยกระดับข้อมูลคุณสมชายเป็น CUSTOMER และสร้างใบเสร็จรับเงินเรียบร้อย")
 
-    # 12. Process 3.3: Portal ลูกค้าเปิดดูใบเสร็จ
+    # 12. Process 3.3: Portal ลูกค่าเปิดดูใบเสร็จ
     wait_next_step(
         page, 12, total_steps,
-        "Portal: ลูกค้าเปิดดูใบเสร็จรับเงินอิเล็กทรอนิกส์ (Process 3.3)",
+        "Portal: ลูกค่าเปิดดูใบเสร็จรับเงินอิเล็กทรอนิกส์ (Process 3.3)",
         "คุณสมชายสามารถเปิดดูและดาวน์โหลดใบเสร็จรับเงินอิเล็กทรอนิกส์ผ่านระบบ Portal ได้ทันทีครับ",
         args.interactive, args.pause
     )
@@ -784,19 +790,19 @@ def run_grand_tour(page, base_url: str, args):
     time.sleep(args.pause)
     print("    ✅ แสดงผลใบเสร็จรับเงินอิเล็กทรอนิกส์พร้อมดาวน์โหลด")
 
-    # 13. Process 4.0: ส่องโปรไฟล์ลูกค้า 360 องศา & RFM Tier
+    # 13. Process 4.0: ส่องโปรไฟล์ลูกค่า 360 องศา & RFM Tier
     wait_next_step(
         page, 13, total_steps,
-        "Customer 360: ส่องโปรไฟล์ลูกค้า 360 องศา & RFM รายบุคคล (Process 4.0)",
-        "พาชมหน้าข้อมูลลูกค้า ดูประวัติบริษัท เลขผู้เสียภาษี และดัชนี RFM Tier รายบุคคลของคุณสมชายครับ",
+        "Customer 360: ส่องโปรไฟล์ลูกค่า 360 องศา & RFM รายบุคคล (Process 4.0)",
+        "พาชมหน้าข้อมูลลูกค่า ดูประวัติบริษัท เลขผู้เสียภาษี และดัชนี RFM Tier รายบุคคลของคุณสมชายครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "sale1", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 13/{total_steps}", "Customer 360: โปรไฟล์ลูกค้า", "ส่องโปรไฟล์คุณสมชาย 360 องศา ดูเลขภาษี ที่อยู่ และ RFM Tier รายบุคคล (Process 4.0)")
-    click_menu(page, "ข้อมูลลูกค้า", args.pause)
+    set_hud(page, f"ขั้นตอนที่ 13/{total_steps}", "Customer 360: โปรไฟล์ลูกค่า", "ส่องโปรไฟล์คุณสมชาย 360 องศา ดูเลขภาษี ที่อยู่ และ RFM Tier รายบุคคล (Process 4.0)")
+    click_menu(page, "ข้อมูลลูกค่า", args.pause)
     click_tab(page, "โปรไฟล์รายบุคคล", args.pause)
-    # เลือกลูกค้า คุณสมชาย หมายมั่น
-    c_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกลูกค้า").first
+    # เลือกลูกค่า คุณสมชาย หมายมั่น
+    c_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกลูกค่า").first
     if c_sel.count() > 0 and c_sel.is_visible():
         c_sel.click()
         page.wait_for_timeout(500)
@@ -807,15 +813,15 @@ def run_grand_tour(page, base_url: str, args):
     time.sleep(args.pause * 1.5)
     print("    ✅ ส่องโปรไฟล์คุณสมชาย 360 องศา และคะแนน RFM รายบุคคล")
 
-    # 14. Process 4.1: Portal ลูกค้าเปิดเคสแจ้งปัญหาเอง
+    # 14. Process 4.1: Portal ลูกค่าเปิดเคสแจ้งปัญหาเอง
     wait_next_step(
         page, 14, total_steps,
-        "Portal: ลูกค้าเปิดเคสแจ้งปัญหาการใช้งาน (Process 4.1 -> D4: TICKET)",
+        "Portal: ลูกค่าเปิดเคสแจ้งปัญหาการใช้งาน (Process 4.1 -> D4: TICKET)",
         "คุณสมชายเปิดเคสแจ้งขอคำปรึกษา API ผ่าน Customer Portal ข้อมูลไหลเข้าสู่ตาราง D4 ทันทีครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, f"ขั้นตอนที่ 14/{total_steps}", "Portal: ลูกค้าแจ้งปัญหาการใช้งาน", "คุณสมชายเปิดเคสแจ้งปัญหาผ่าน Portal (Process 4.1 -> ตาราง D4: TICKET)")
+    set_hud(page, f"ขั้นตอนที่ 14/{total_steps}", "Portal: ลูกค่าแจ้งปัญหาการใช้งาน", "คุณสมชายเปิดเคสแจ้งปัญหาผ่าน Portal (Process 4.1 -> ตาราง D4: TICKET)")
     # เลือกตัวตนคุณสมชาย
     p_sel = page.locator("[data-testid='stSelectbox']").filter(has_text="เลือกตัวตนของคุณ").first
     if p_sel.count() > 0 and p_sel.is_visible():
@@ -843,7 +849,7 @@ def run_grand_tour(page, base_url: str, args):
     wait_next_step(
         page, 15, total_steps,
         "Support: แชทสดสองทาง & ปิดเคสปัญหา (Process 4.2 -> D4: TICKET_MESSAGE)",
-        "เจ้าหน้าที่บริการลูกค้า (cs1) พิมพ์แชทสดตอบกลับคุณสมชาย มอบหมายผู้รับผิดชอบ และอัปเดตปิดเคสครับ",
+        "เจ้าหน้าที่บริการลูกค่า (cs1) พิมพ์แชทสดตอบกลับคุณสมชาย มอบหมายผู้รับผิดชอบ และอัปเดตปิดเคสครับ",
         args.interactive, args.pause
     )
     login(page, base_url, "cs1", args.pause)
@@ -873,10 +879,10 @@ def run_grand_tour(page, base_url: str, args):
         page.wait_for_timeout(1500)
     print("    ✅ แชทสดสองทางและอัปเดตสถานะเคสบริการของคุณสมชายสำเร็จ")
 
-    # 16. Process 4.3: Portal ลูกค้าประเมิน 5 ดาว (CSAT)
+    # 16. Process 4.3: Portal ลูกค่าประเมิน 5 ดาว (CSAT)
     wait_next_step(
         page, 16, total_steps,
-        "Portal: ลูกค้าประเมินความพึงพอใจ 5 ดาว (Process 4.3 -> CSAT & Health Score)",
+        "Portal: ลูกค่าประเมินความพึงพอใจ 5 ดาว (Process 4.3 -> CSAT & Health Score)",
         "คุณสมชายประเมินคะแนนบริการ 5 ดาว ซึ่งคะแนนนี้จะส่งผลบวกต่อ Customer Health Score ครับ",
         args.interactive, args.pause
     )
@@ -913,11 +919,11 @@ def run_grand_tour(page, base_url: str, args):
     click_tab(page, "Lead Scoring", args.pause)
     time.sleep(args.pause)
 
-    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค้า Recency, Frequency, Monetary (Champions vs At Risk)")
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [2/4]", "Data Science: RFM Segmentation", "จัดกลุ่มลูกค่า Recency, Frequency, Monetary (Champions vs At Risk)")
     click_tab(page, "RFM Segmentation", args.pause)
     time.sleep(args.pause)
 
-    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค้าตีจากด้วยดัชนีสุขภาพ 5 มิติ")
+    set_hud(page, f"ขั้นตอนที่ 17/{total_steps} [3/4]", "Data Science: Customer Health & Churn", "เฝ้าระวังลูกค่าตีจากด้วยดัชนีสุขภาพ 5 มิติ")
     click_tab(page, "Customer Health & Churn", args.pause)
     time.sleep(args.pause)
 
@@ -949,15 +955,15 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     print("    เป้าหมาย: นำเข้า Lead ผ่าน Portal -> คัดกรองด้วย AI -> ออกใบเสนอราคา -> ตรวจสลิป -> ยกระดับเป็น Customer")
     print("-" * 60)
 
-    # 1.1 (สไลด์ 3): พอร์ทัลลูกค้า: สมชายลงทะเบียนขอรับโปรโมชัน (Lead Intake)
+    # 1.1 (สไลด์ 3): พอร์ทัลลูกค่า: สมชายลงทะเบียนขอรับโปรโมชัน (Lead Intake)
     wait_next_step(
         page, step_offset + 1, total_steps,
-        "เคส 1 [สไลด์ 3] · พอรทัลลูกคา : สมชายลงทะเบียนขอรับโปรโมชัน (Lead Intake - DFD 1.2)",
-        "จำลองมุมมองลูกค้าภายนอกลงทะเบียนขอโปรโมชันด้วยตนเองผ่าน Customer Portal ข้อมูลจะไหลเข้าสู่ Store D1: LEAD ตาม DFD 1.0 ทันที",
+        "เคส 1 [สไลด์ 3] · พอร์ทัลลูกค่า : สมชายลงทะเบียนขอรับโปรโมชัน (Lead Intake - DFD 1.2)",
+        "จำลองมุมมองลูกค่าภายนอกลงทะเบียนขอโปรโมชันด้วยตนเองผ่าน Customer Portal ข้อมูลจะไหลเข้าสู่ Store D1: LEAD ตาม DFD 1.0 ทันที",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, "DEMO 03/17", "เคส 1: พอรทัลลูกคา (Process 1.2)", "คุณสมชาย หมายมั่น ลงทะเบียนขอรับโปรโมชัน -> ออกรหัส Lead ใน Store D1")
+    set_hud(page, "DEMO 03/17", "เคส 1: พอร์ทัลลูกค่า (Process 1.2)", "คุณสมชาย หมายมั่น ลงทะเบียนขอรับโปรโมชัน -> ออกรหัส Lead ใน Store D1")
     click_tab(page, "ลงทะเบียนความสนใจ", args.pause)
     page.get_by_label("ชื่อ-นามสกุล *").fill("คุณสมชาย หมายมั่น")
     page.get_by_label("เบอร์โทรศัพท์ *").fill("081-999-8888")
@@ -973,12 +979,12 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     # 1.2 (สไลด์ 4): ฝ่ายการตลาด: คัดกรอง Lead และส่งโปรโมชันเจาะจง (Campaign Match)
     wait_next_step(
         page, step_offset + 2, total_steps,
-        "เคส 1 [สไลด์ 4] · ฝายการตลาด : คัดกรอง Lead และสงโปรโมชันเจาะจง (Campaign Match - DFD 1.1 & 1.3)",
+        "เคส 1 [สไลด์ 4] · ฝ่ายการตลาด : คัดกรอง Lead และส่งโปรโมชันเจาะจง (Campaign Match - DFD 1.1 & 1.3)",
         "ฝ่ายการตลาดใช้ข้อมูล Data Science จาก Campaign ROI ตัดสินใจเลือกแคมเปญที่มีผลตอบแทนสูงสุดให้ Lead เกิดการเชื่อมโยง DFD 1.0 และ 5.0",
         args.interactive, args.pause
     )
     login(page, base_url, "marketing1", args.pause)
-    set_hud(page, "DEMO 04/17", "เคส 1: ฝายการตลาด (Process 1.1 & 1.3)", "ตรวจสอบแคมเปญ ROI สูงสุด CMP003 (Digital Ads Q3) และส่งมอบโปรโมชัน")
+    set_hud(page, "DEMO 04/17", "เคส 1: ฝ่ายการตลาด (Process 1.1 & 1.3)", "ตรวจสอบแคมเปญ ROI สูงสุด CMP003 (Digital Ads Q3) และส่งมอบโปรโมชัน")
     click_menu(page, "งานการตลาด", args.pause)
     click_tab(page, "แคมเปญทั้งหมด", args.pause)
     time.sleep(args.pause)
@@ -987,7 +993,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     # 1.3 (สไลด์ 5): ฝ่ายขาย: จัดลำดับคิวโทรด้วย AI Lead Scoring (AI Priority Queue)
     wait_next_step(
         page, step_offset + 3, total_steps,
-        "เคส 1 [สไลด์ 5] · ฝายขาย : จัดลําดับคิวโทรดวย AI Lead Scoring (AI Priority Queue - DFD 2.1)",
+        "เคส 1 [สไลด์ 5] · ฝ่ายขาย : จัดลำดับคิวโทรด้วย AI Lead Scoring (AI Priority Queue - DFD 2.1)",
         "ฝ่ายขายไม่ต้องสุ่มโทร แต่เปิดคิวงาน AI ระบบพยากรณ์โอกาสซื้อด้วย Random Forest ทำให้ทีมขายโฟกัส Hot Lead ได้ตรงเป้าหมาย",
         args.interactive, args.pause
     )
@@ -1001,7 +1007,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     # 1.4 (สไลด์ 6): ฝ่ายขาย: บันทึกกิจกรรมการโทรและอัปเดตสถานะ (Activity Logging)
     wait_next_step(
         page, step_offset + 4, total_steps,
-        "เคส 1 [สไลด์ 6] · ฝายขาย : บันทึกกิจกรรมการโทรและอัปเดตสถานะ (Activity Logging - DFD 2.2)",
+        "เคส 1 [สไลด์ 6] · ฝ่ายขาย : บันทึกกิจกรรมการโทรและอัปเดตสถานะ (Activity Logging - DFD 2.2)",
         "ประวัติการติดต่อทุกครั้งถูกบันทึกอย่างเป็นระบบ ไทม์ไลน์ฝั่งขวาแสดงประวัติย้อนหลังช่วยให้การส่งต่องานในทีมขายราบรื่น",
         args.interactive, args.pause
     )
@@ -1010,7 +1016,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     select_dropdown_option(page, "เลือกผู้สนใจ", "LD0264")
     act_note = page.get_by_label("บันทึกผลการติดต่อ")
     if act_note.is_visible():
-        act_note.fill("โทรประสานงาน นำเสนอโซลูชัน ลูกค้าขอใบเสนอราคา")
+        act_note.fill("โทรประสานงาน นำเสนอโซลูชัน ลูกค่าขอใบเสนอราคา")
     select_dropdown_option(page, "อัปเดตสถานะผู้สนใจ", "อยู่ระหว่างเสนอขาย")
     save_act = page.get_by_role("button", name=re.compile("บันทึก")).first
     if save_act.is_visible():
@@ -1021,7 +1027,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     # 1.5 (สไลด์ 7): ฝ่ายขาย: ออกใบเสนอราคาและคำนวณส่วนลดอัตโนมัติ (Quotation)
     wait_next_step(
         page, step_offset + 5, total_steps,
-        "เคส 1 [สไลด์ 7] · ฝายขาย : ออกใบเสนอราคาและคํานวณสวนลดอัตโนมัติ (Quotation - DFD 2.3)",
+        "เคส 1 [สไลด์ 7] · ฝ่ายขาย : ออกใบเสนอราคาและคำนวณส้วนลดอัตโนมัติ (Quotation - DFD 2.3)",
         "ระบบคำนวณส่วนลดตามแคมเปญให้อัตโนมัติพร้อมออกเอกสารเสนอราคาที่มีความถูกต้องตามหลักบัญชีตาม DFD 2.3",
         args.interactive, args.pause
     )
@@ -1030,7 +1036,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
     click_tab(page, "ออกใบเสนอราคา", args.pause)
     select_dropdown_option(page, "เลือกผู้สนใจ", "LD0264")
 
-    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค้า").first
+    ms = page.locator("[data-baseweb='select']").filter(has_text="รายการสินค่า").first
     if not ms.is_visible():
         ms = page.locator("div[data-testid='stMultiSelect']").first
     if ms.is_visible():
@@ -1054,34 +1060,34 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
         page.wait_for_timeout(2000)
     print("    ✅ ออกใบเสนอราคาให้คุณวิชัย LD0264 บันทึกข้อมูลลงตาราง D3: SALE สำเร็จ")
 
-    # 1.6 (สไลด์ 8): พอร์ทัลลูกค้า: ยืนยันคำสั่งซื้อและอัปโหลดสลิปโอนเงิน (Order & Slip)
+    # 1.6 (สไลด์ 8): พอร์ทัลลูกค่า: ยืนยันคำสั่งซื้อและอัปโหลดสลิปโอนเงิน (Order & Slip)
     wait_next_step(
         page, step_offset + 6, total_steps,
-        "เคส 1 [สไลด์ 8] · พอรทัลลูกคา : ยืนยันคําสั่งซื้อและอัปโหลดสลิปโอนเงิน (Order & Slip - DFD 3.1 & 3.2)",
-        "ลูกค้าตรวจสอบความถูกต้องและส่งสลิปด้วยตนเองผ่าน Portal ข้อมูลไหลเข้าสู่ DFD Process 3.0 อัตโนมัติ",
+        "เคส 1 [สไลด์ 8] · พอร์ทัลลูกค่า : ยืนยันคำสั่งซื้อและอัปโหลดสลิปโอนเงิน (Order & Slip - DFD 3.1 & 3.2)",
+        "ลูกค่าตรวจสอบความถูกต้องและส่งสลิปด้วยตนเองผ่าน Portal ข้อมูลไหลเข้าสู่ DFD Process 3.0 อัตโนมัติ",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
-    set_hud(page, "DEMO 08/17", "เคส 1: พอร์ทัลลูกค้า (Process 3.1 - 3.2)", "คุณวิชัย (LD0264) ตรวจสอบใบเสนอราคาและกดยืนยันคำสั่งซื้อด้วยตนเอง")
+    set_hud(page, "DEMO 08/17", "เคส 1: พอร์ทัลลูกค่า (Process 3.1 - 3.2)", "คุณวิชัย (LD0264) ตรวจสอบใบเสนอราคาและกดยืนยันคำสั่งซื้อด้วยตนเอง")
     select_portal_identity(page, "LD0264")
     click_tab(page, "ยืนยันคำสั่งซื้อ", args.pause)
     confirm_btn = page.get_by_role("button", name=re.compile("ยืนยันสั่งซื้อ")).first
     if confirm_btn.is_visible():
         confirm_btn.click()
         page.wait_for_timeout(1500)
-        print("    ✅ ลูกค้า LD0264 กดยืนยันคำสั่งซื้อเรียบร้อย")
+        print("    ✅ ลูกค่า LD0264 กดยืนยันคำสั่งซื้อเรียบร้อย")
     else:
         print("    ℹ️ คำสั่งซื้อของ LD0264 อยู่ในสถานะพร้อมตรวจรับ")
 
     # 1.7 (สไลด์ 9): ฝ่ายขาย: ตรวจรับเงิน ยกระดับเป็น CUSTOMER & ออกใบเสร็จ (Closed-Won)
     wait_next_step(
         page, step_offset + 7, total_steps,
-        "เคส 1 [สไลด์ 9] · ฝายขาย : ตรวจรับเงิน ยกระดับเปน CUSTOMER & ออกใบเสร็จ (Closed-Won - DFD 3.3)",
+        "เคส 1 [สไลด์ 9] · ฝ่ายขาย : ตรวจรับเงิน ยกระดับเปิน CUSTOMER & ออกใบเสร็จ (Closed-Won - DFD 3.3)",
         "เมื่อตรวจรับเงินถูกต้อง ระบบยกระดับสถานะจาก Lead สู่ CUSTOMER ทางการทันทีก่อนออกใบเสร็จ ถือเป็นการปิดการขายสมบูรณ์",
         args.interactive, args.pause
     )
     login(page, base_url, "sale1", args.pause)
-    set_hud(page, "DEMO 09/17", "เคส 1: ออกใบเสร็จ & ยกระดับลูกค้า (Process 3.3)", "ตรวจรับเงิน ออกใบเสร็จ และยกระดับคุณวิชัยสู่ Store D4: CUSTOMER สำเร็จ 100%")
+    set_hud(page, "DEMO 09/17", "เคส 1: ออกใบเสร็จ & ยกระดับลูกค่า (Process 3.3)", "ตรวจรับเงิน ออกใบเสร็จ และยกระดับคุณวิชัยสู่ Store D4: CUSTOMER สำเร็จ 100%")
     click_menu(page, "ใบเสนอราคา/ชำระเงิน", args.pause)
     click_tab(page, "รับ & ตรวจคำสั่งซื้อ", args.pause)
     ok_b = page.get_by_role("button", name=re.compile("ตรวจแล้วถูกต้อง")).first
@@ -1098,7 +1104,7 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
         p_btn.click()
         page.wait_for_timeout(1500)
 
-    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค้า", args.pause)
+    click_tab(page, "ออกใบเสร็จ + บันทึกลูกค่า", args.pause)
     r_btn = page.get_by_role("button", name=re.compile("ออกใบเสร็จ")).first
     if r_btn.count() > 0 and r_btn.is_visible():
         r_btn.click()
@@ -1112,27 +1118,27 @@ def run_slide_case1(page, base_url: str, args, step_offset: int = 0, total_steps
 def run_slide_case2(page, base_url: str, args, step_offset: int = 0, total_steps: int = 3):
     print("\n" + "-" * 60)
     print("📌  เคสที่ 2: Support & 5-Star Rating (สไลด์ 10 – 12)")
-    print("    เป้าหมาย: เปิดเคสแจ้งปัญหาให้ลูกค้ากลุ่มเสี่ยง -> แชทสดแก้ไขปัญหา -> ลูกค้าประเมิน 5 ดาวกู้ Health Score")
+    print("    เป้าหมาย: เปิดเคสแจ้งปัญหาให้ลูกค่ากลุ่มเสี่ยง -> แชทสดแก้ไขปัญหา -> ลูกค่าประเมิน 5 ดาวกู้ Health Score")
     print("-" * 60)
 
-    # 2.1 (สไลด์ 10): ฝ่ายบริการลูกค้า: รับแจ้งปัญหาและเปิดเคส (Ticket Registration)
+    # 2.1 (สไลด์ 10): ฝ่ายบริการลูกค่า: รับแจ้งปัญหาและเปิดเคส (Ticket Registration)
     wait_next_step(
         page, step_offset + 1, total_steps,
-        "เคส 2 [สไลด์ 10] · ฝายบริการลูกคา : รับแจงปญหาและเปดเคส (Ticket Registration - DFD 4.1)",
-        "ฝ่ายบริการลูกค้ารับแจ้งปัญหาและบันทึกเข้าระบบ โดยระบุระดับความรุนแรงและหมวดหมู่เพื่อจัดสรรเจ้าหน้าที่เข้าแก้ไข",
+        "เคส 2 [สไลด์ 10] · ฝ่ายบริการลูกค่า : รับแจ๊งปัญหาและเปิดเคส (Ticket Registration - DFD 4.1)",
+        "ฝ่ายบริการลูกค่ารับแจ้งปัญหาและบันทึกเข้าระบบ โดยระบุระดับความรุนแรงและหมวดหมู่เพื่อจัดสรรเจ้าหน้าที่เข้าแก้ไข",
         args.interactive, args.pause
     )
     login(page, base_url, "cs1", args.pause)
-    set_hud(page, "DEMO 10/17", "เคส 2: รับแจ้งปัญหาและเปิดเคส (Process 4.1)", "เปิดเคสให้ลูกค้า CU0178 (ร้านสมหญิง การค้า) ระบุปัญหาและหมวดหมู่ลง D4: TICKET")
+    set_hud(page, "DEMO 10/17", "เคส 2: รับแจ้งปัญหาและเปิดเคส (Process 4.1)", "เปิดเคสให้ลูกค่า CU0178 (ร้านสมหญิง การค่า) ระบุปัญหาและหมวดหมู่ลง D4: TICKET")
     click_menu(page, "รับแจ้งปัญหา", args.pause)
     click_tab(page, "เปิดเคสใหม่", args.pause)
 
-    select_dropdown_option(page, "ลูกค้า *", "CU0178")
+    select_dropdown_option(page, "ลูกค่า *", "CU0178")
     select_dropdown_option(page, "ประเภทปัญหา", "ระบบขัดข้อง")
     title_input = page.get_by_label("หัวข้อปัญหา *").first
     if title_input.count() > 0 and title_input.is_visible():
         title_input.fill("ไม่สามารถเปิดดูรายงานสรุปยอดขายรายไตรมาสได้")
-    detail_input = page.get_by_label("รายละเอียดจากลูกค้า").first
+    detail_input = page.get_by_label("รายละเอียดจากลูกค่า").first
     if detail_input.count() > 0 and detail_input.is_visible():
         detail_input.fill("ระบบแจ้งเตือนข้อผิดพลาด เกิดปัญหาการประมวลผลข้อมูลขนาดใหญ่ ขอให้ตรวจสอบด่วน")
     select_dropdown_option(page, "มอบหมายให้", "ศุภชัย ซัพพอร์ต")
@@ -1141,12 +1147,12 @@ def run_slide_case2(page, base_url: str, args, step_offset: int = 0, total_steps
     if create_tk.count() > 0 and create_tk.is_visible():
         create_tk.click()
         page.wait_for_timeout(1500)
-    print("    ✅ เปิดเคสปัญหาให้ 'CU0178 ร้านสมหญิง การค้า' สำเร็จ (บันทึกลง Store D4: TICKET)")
+    print("    ✅ เปิดเคสปัญหาให้ 'CU0178 ร้านสมหญิง การค่า' สำเร็จ (บันทึกลง Store D4: TICKET)")
 
-    # 2.2 (สไลด์ 11): ฝ่ายบริการลูกค้า: สนทนา ประสานงาน และแก้ไขปัญหา (Ticket Resolution)
+    # 2.2 (สไลด์ 11): ฝ่ายบริการลูกค่า: สนทนา ประสานงาน และแก้ไขปัญหา (Ticket Resolution)
     wait_next_step(
         page, step_offset + 2, total_steps,
-        "เคส 2 [สไลด์ 11] · ฝายบริการลูกคา : สนทนา ประสานงาน และแกไขปญหา (Ticket Resolution - DFD 4.2)",
+        "เคส 2 [สไลด์ 11] · ฝ่ายบริการลูกค่า : สนทนา ประสานงาน และแก้ไขปัญหา (Ticket Resolution - DFD 4.2)",
         "ระบบมีช่องทางสนทนาที่เก็บบันทึกประวัติการสื่อสารทั้งหมด เพื่อความโปร่งใสและตรวจสอบย้อนหลังได้ตาม DFD 4.2",
         args.interactive, args.pause
     )
@@ -1164,20 +1170,20 @@ def run_slide_case2(page, base_url: str, args, step_offset: int = 0, total_steps
 
     # อัปเดตสถานะเป็น ปิดเคสสำเร็จ
     select_dropdown_option(page, "สถานะ", "ปิดเคสสำเร็จ")
-    res_box = page.get_by_label("สรุปผลการแก้ไข (แจ้งลูกค้าเมื่อปิดเคส)").first
+    res_box = page.get_by_label("สรุปผลการแก้ไข (แจ้งลูกค่าเมื่อปิดเคส)").first
     if res_box.count() > 0 and res_box.is_visible():
-        res_box.fill("แก้ไขปัญหาเสร็จสิ้น: รีเซ็ตแคชและประมวลผลข้อมูลใหม่เรียบร้อย ลูกค้าสามารถเปิดดูรายงานได้ตามปกติ")
+        res_box.fill("แก้ไขปัญหาเสร็จสิ้น: รีเซ็ตแคชและประมวลผลข้อมูลใหม่เรียบร้อย ลูกค่าสามารถเปิดดูรายงานได้ตามปกติ")
     upd_btn = page.get_by_role("button", name=re.compile("อัปเดต")).first
     if upd_btn.count() > 0 and upd_btn.is_visible():
         upd_btn.click()
         page.wait_for_timeout(1500)
     print("    ✅ แชทสดสองทางและอัปเดตสถานะเคสของร้านสมหญิงเป็น 'ปิดเคสสำเร็จ'")
 
-    # 2.3 (สไลด์ 12): พอร์ทัลลูกค้า: ประเมินความพึงพอใจการบริการ 5 ดาว (CSAT Feedback)
+    # 2.3 (สไลด์ 12): พอร์ทัลลูกค่า: ประเมินความพึงพอใจการบริการ 5 ดาว (CSAT Feedback)
     wait_next_step(
         page, step_offset + 3, total_steps,
-        "เคส 2 [สไลด์ 12] · พอรทัลลูกคา : ประเมินความพึงพอใจการบริการ 5 ดาว (CSAT Feedback - DFD 4.3)",
-        "ลูกค้าประเมินความพึงพอใจผ่าน Portal โดยคะแนนนี้จะส่งตรงไปเป็นตัวแปรคำนวณ Customer Health Score ทันที",
+        "เคส 2 [สไลด์ 12] · พอร์ทัลลูกค่า : ประเมินความพึงพอใจการบริการ 5 ดาว (CSAT Feedback - DFD 4.3)",
+        "ลูกค่าประเมินความพึงพอใจผ่าน Portal โดยคะแนนนี้จะส่งตรงไปเป็นตัวแปรคำนวณ Customer Health Score ทันที",
         args.interactive, args.pause
     )
     login(page, base_url, "guest", args.pause)
@@ -1210,7 +1216,7 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     # 3.1 (สไลด์ 13): วิทยาศาสตร์ข้อมูล 1: พยากรณ์โอกาสปิดการขาย (Lead Scoring Model)
     wait_next_step(
         page, step_offset + 1, total_steps,
-        "เคส 3 [สไลด์ 13] · วิทยาศาสตรขอมูล 1: พยากรณโอกาสปดการขาย (Lead Scoring Model - DFD 5.1)",
+        "เคส 3 [สไลด์ 13] · วิทยาศาสตร์ข้อมูล 1: พยากรณ์โอกาสปิดการขาย (Lead Scoring Model - DFD 5.1)",
         "Machine Learning ช่วยให้ผู้บริหารเห็นภาพรวมศักยภาพของ Lead ทั้งหมด และจัดสรรทรัพยากรทีมขายได้อย่างแม่นยำ",
         args.interactive, args.pause
     )
@@ -1219,11 +1225,11 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     time.sleep(args.pause * 1.2)
     print("    ✅ นำเสนอโมเดล Lead Scoring (ROC-AUC, Distribution Plot, Feature Importance)")
 
-    # 3.2 (สไลด์ 14): วิทยาศาสตร์ข้อมูล 2: การจัดกลุ่มลูกค้าด้วย RFM (Customer Segmentation)
+    # 3.2 (สไลด์ 14): วิทยาศาสตร์ข้อมูล 2: การจัดกลุ่มลูกค่าด้วย RFM (Customer Segmentation)
     wait_next_step(
         page, step_offset + 2, total_steps,
-        "เคส 3 [สไลด์ 14] · วิทยาศาสตรขอมูล 2: การจัดกลุมลูกคาดวย RFM (Customer Segmentation - DFD 5.1)",
-        "RFM ช่วยแยกแยะระหว่างลูกค้าชั้นดีและลูกค้าที่กำลังจะหายไป เพื่อให้ทีมการตลาดทำแคมเปญรักษาลูกค้าได้อย่างตรงจุด",
+        "เคส 3 [สไลด์ 14] · วิทยาศาสตร์ข้อมูล 2: การจัดกลุ่มลูกค่าด้วย RFM (Customer Segmentation - DFD 5.1)",
+        "RFM ช่วยแยกแยะระหว่างลูกค่าชั้นดีและลูกค่าที่กำลังจะหายไป เพื่อให้ทีมการตลาดทำแคมเปญรักษาลูกค่าได้อย่างตรงจุด",
         args.interactive, args.pause
     )
     set_hud(page, "DEMO 14/17", "เคส 3: RFM Customer Segmentation (Feature 2)", "Quintile + K-Means: กลุ่ม Champions (CU0175) vs กลุ่ม At Risk (CU0178 ร้านสมหญิง)")
@@ -1231,14 +1237,14 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     time.sleep(args.pause * 1.2)
     print("    ✅ นำเสนอ RFM Segmentation 3D Scatter & Treemap เปรียบเทียบ Champions vs At Risk")
 
-    # 3.3 (สไลด์ 15): วิทยาศาสตร์ข้อมูล 3: ดัชนีสุขภาพลูกค้าและการเตือนภัย Churn (Health Score)
+    # 3.3 (สไลด์ 15): วิทยาศาสตร์ข้อมูล 3: ดัชนีสุขภาพลูกค่าและการเตือนภัย Churn (Health Score)
     wait_next_step(
         page, step_offset + 3, total_steps,
-        "เคส 3 [สไลด์ 15] · วิทยาศาสตรขอมูล 3: ดัชนีสุขภาพลูกคาและการเตือนภัย Churn (Health Score - DFD 5.1)",
-        "ระบบไม่รอให้ลูกค้ายกเลิกสัญญา แต่ตรวจจับพฤติกรรมผิดปกติล่วงหน้าจาก 5 มิติ เพื่อให้ทีมงานเข้าแก้ไขได้ทันท่วงที",
+        "เคส 3 [สไลด์ 15] · วิทยาศาสตร์ข้อมูล 3: ดัชนีสุขภาพลูกค่าและการเตือนภัย Churn (Health Score - DFD 5.1)",
+        "ระบบไม่รอให้ลูกค่ายกเลิกสัญญา แต่ตรวจจับพฤติกรรมผิดปกติล่วงหน้าจาก 5 มิติ เพื่อให้ทีมงานเข้าแก้ไขได้ทันท่วงที",
         args.interactive, args.pause
     )
-    set_hud(page, "DEMO 15/17", "เคส 3: Churn & Health Score (Feature 3)", "ประเมินความเสี่ยงล่วงหน้า 5 มิติ เฝ้าระวังลูกค้าเสี่ยงสูง: ร้านสมหญิง การค้า (CU0178)")
+    set_hud(page, "DEMO 15/17", "เคส 3: Churn & Health Score (Feature 3)", "ประเมินความเสี่ยงล่วงหน้า 5 มิติ เฝ้าระวังลูกค่าเสี่ยงสูง: ร้านสมหญิง การค่า (CU0178)")
     click_tab(page, "Customer Health & Churn", args.pause)
     time.sleep(args.pause * 1.2)
     print("    ✅ นำเสนอเกจวัด Health Score และตาราง High Churn Risk Early Warning")
@@ -1246,7 +1252,7 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     # 3.4 (สไลด์ 16): วิทยาศาสตร์ข้อมูล 4: วิเคราะห์ความคุ้มค่าทางการเงิน (Campaign Financial ROI)
     wait_next_step(
         page, step_offset + 4, total_steps,
-        "เคส 3 [สไลด์ 16] · วิทยาศาสตรขอมูล 4: วิเคราะหความคุมคาทางการเงิน (Campaign Financial ROI - DFD 5.1)",
+        "เคส 3 [สไลด์ 16] · วิทยาศาสตร์ข้อมูล 4: วิเคราะห์ความคุ้มค่าทางการเงิน (Campaign Financial ROI - DFD 5.1)",
         "ฝ่ายการตลาดพิสูจน์ความคุ้มค่าของงบโฆษณาได้จริง แคมเปญ Digital Ads Q3 ให้ ROI เกิน 100% ตอบโจทย์การลงทุนของผู้บริหาร",
         args.interactive, args.pause
     )
@@ -1258,7 +1264,7 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     # 3.5 (สไลด์ 17): บทสรุปการสาธิตระบบ: รายงานยอดขายและส่งมอบผลงาน (Delivery Ready)
     wait_next_step(
         page, step_offset + 5, total_steps,
-        "เคส 3 [สไลด์ 17] · บทสรุปการสาธิตระบบ : รายงานยอดขายและสงมอบผลงาน (Delivery Ready - DFD 5.2)",
+        "เคส 3 [สไลด์ 17] · บทสรุปการสาธิตระบบ : รายงานยอดขายและส่งมอบผลงาน (Delivery Ready - DFD 5.2)",
         "ทั้งหมดนี้คือ Smart CRM Analytics ที่ผสานทฤษฎีฐานข้อมูลเชิงสัมพันธ์ วิทยาศาสตร์ข้อมูล และซอฟต์แวร์ที่ทำงานได้จริง 100% ครับ",
         args.interactive, args.pause
     )
@@ -1386,7 +1392,7 @@ def run_live_demo():
             print("\n▶️ [เริ่มต้น] เข้าสู่หน้าหลักระบบ Smart CRM Analytics...")
             page.goto(base_url, wait_until="networkidle")
             page.wait_for_timeout(1000)
-            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.1", "ระบบบริหารจัดการลูกค้าอัจฉริยะ (3NF SQLite + AI Data Science)")
+            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.1", "ระบบบริหารจัดการลูกค่าอัจฉริยะ (3NF SQLite + AI Data Science)")
 
             if args.scenario in ("case1", "lead-to-customer"):
                 run_slide_case1(page, base_url, args, step_offset=0, total_steps=7)
