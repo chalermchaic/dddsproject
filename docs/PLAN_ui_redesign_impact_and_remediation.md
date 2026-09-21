@@ -170,6 +170,16 @@
 1. ลบสคริปต์ `build_*.py` และ `export_*.ps1` ทั้ง 6 ไฟล์ออกจาก Git
 2. ลบไฟล์ `.docx`, `.pptx`, `.pdf` ที่ไม่จำเป็นออกจากโฟลเดอร์ `docs/`
 
+### เฟส 5: แก้ไขบั๊กปุ่ม Logout หาย และแก้ปัญหาเนื้อหาฝั่งขวาล้นจอ (สำเร็จ ✅)
+1. **แก้ปัญหาปุ่ม Logout หาย:**
+   * เพิ่มปุ่ม `🚪 ออกจากระบบ` ไว้ภายในการ์ดโปรไฟล์ผู้ใช้ด้านบนของ Sidebar ใน [`auth.py`](file:///c:/Users/momo/dev/dddsproject/auth.py) ทันที เพื่อให้มองเห็นและกดสลับบัญชีได้ตลอดเวลาจากทุกหน้าจอ
+   * ปรับ `margin-top` ของ `stSidebarNav` ใน [`app.py`](file:///c:/Users/momo/dev/dddsproject/app.py) เป็น 215px ไม่ให้เกยทับเมนู
+2. **แก้ปัญหาฝั่งขวาล้นจอ (Horizontal Overflow):**
+   * ฉีด CSS ใน [`app.py`](file:///c:/Users/momo/dev/dddsproject/app.py) ปรับลด padding ซ้าย-ขวาของ `.main .block-container` เหลือ 1.5rem และใส่ `overflow-x: clip`
+   * ปรับการ์ดสถิติใน [`pages/0_home.py`](file:///c:/Users/momo/dev/dddsproject/pages/0_home.py) จากเดิม 5 คอลัมน์แถวเดียว เป็น 2 แถวสมดุล (แถวบน 3 การ์ด / แถวล่าง 2 การ์ด)
+3. **Re-capture หลักฐานหน้าจอใหม่ครบ 27 ภาพ:**
+   * รัน `tests/e2e/capture_manual_evidence.py` ซ้ำ เพื่อให้ภาพทั้งหมดใน `docs/evidence/` ได้หน้าจอที่พอดีขอบ สวยงาม ไร้ Scrollbar แนวนอน และมีปุ่มออกจากระบบที่มุมซ้ายบนชัดเจน
+
 ---
 
 ## ✅ เกณฑ์การยอมรับงาน (Acceptance Criteria / Definition of Done)
