@@ -35,14 +35,16 @@ SELECT
 k = cached_query(KPI_SQL).iloc[0]
 conv = 100 * k["won"] / k["leads"] if k["leads"] else 0
 
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("👥 ผู้สนใจทั้งหมด", f"{k['leads']:,}", f"เปิดอยู่ {k['open_leads']:,} ราย")
-c2.metric("🎯 อัตราปิดการขาย", f"{conv:.1f}%", f"สำเร็จ {k['won']:,} ราย")
-c3.metric("🧑‍💼 ลูกค้าปัจจุบัน", f"{k['customers']:,}")
-c4.metric("💰 รายได้รวม", f"฿{k['revenue']:,.0f}")
-c5.metric("🎫 เคสค้าง", f"{k['open_tickets']:,}",
-          delta="ต้องดำเนินการ" if k["open_tickets"] else "เคลียร์หมด",
-          delta_color="inverse" if k["open_tickets"] else "normal")
+r1_1, r1_2, r1_3 = st.columns(3)
+r1_1.metric("👥 ผู้สนใจทั้งหมด", f"{k['leads']:,}", f"เปิดอยู่ {k['open_leads']:,} ราย")
+r1_2.metric("🎯 อัตราปิดการขาย", f"{conv:.1f}%", f"สำเร็จ {k['won']:,} ราย")
+r1_3.metric("🧑‍💼 ลูกค้าปัจจุบัน", f"{k['customers']:,}")
+
+r2_1, r2_2 = st.columns(2)
+r2_1.metric("💰 รายได้รวม", f"฿{k['revenue']:,.0f}")
+r2_2.metric("🎫 เคสค้าง", f"{k['open_tickets']:,}",
+            delta="ต้องดำเนินการ" if k["open_tickets"] else "เคลียร์หมด",
+            delta_color="inverse" if k["open_tickets"] else "normal")
 
 st.divider()
 

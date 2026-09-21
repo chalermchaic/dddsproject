@@ -25,6 +25,20 @@ st.set_page_config(page_title="Smart CRM Analytics",
 # ธีม backoffice: sidebar เข้ม + การ์ด/metric แบบยกขอบมีเงาบนพื้นเนื้อหาสว่าง
 st.markdown("""
 <style>
+  /* ป้องกันการล้นจอแนวนอนและลด padding ซ้าย-ขวาให้พอดีพื้นที่ */
+  .main .block-container,
+  [data-testid="stMainBlockContainer"],
+  .stMainBlockContainer {
+      max-width: 100% !important;
+      padding-left: 1.5rem !important;
+      padding-right: 1.5rem !important;
+      padding-top: 1.5rem !important;
+      overflow-x: clip !important;
+  }
+  [data-testid="stAppViewBlockContainer"] {
+      overflow-x: clip !important;
+  }
+
   [data-testid="stSidebar"] { background-color: #171B26; }
   [data-testid="stSidebar"] * { color: #E7E9EE; }
   [data-testid="stSidebarNav"] a { border-radius: 8px; padding-top: .5rem; padding-bottom: .5rem; }
