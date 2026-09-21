@@ -1375,11 +1375,10 @@ def run_live_demo():
         browser = p.chromium.launch(
             headless=args.headless,
             slow_mo=args.slow_mo,
-            args=["--start-maximized"]
+            args=["--start-maximized", "--window-size=1460,940"]
         )
         context = browser.new_context(
-            viewport={"width": 1440, "height": 900},
-            no_viewport=True if not args.headless else False
+            viewport={"width": 1440, "height": 900}
         )
         page = context.new_page()
 
