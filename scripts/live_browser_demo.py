@@ -82,15 +82,25 @@ def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False
             el.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
             el.style.color = '#ffffff';
             el.style.padding = '6px 16px';
-            el.style.borderRadius = '30px';
-            el.style.boxShadow = '0 8px 25px rgba(0,0,0,0.5), 0 0 15px rgba(56,189,248,0.25)';
+            el = document.createElement('div');
+            el.id = 'live-demo-hud';
+            el.style.position = 'fixed';
+            el.style.top = '10px';
+            el.style.left = '50%';
+            el.style.transform = 'translateX(-50%)';
+            el.style.zIndex = '99999999';
+            el.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+            el.style.color = '#ffffff';
+            el.style.padding = '5px 14px';
+            el.style.borderRadius = '24px';
+            el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.5), 0 0 12px rgba(56,189,248,0.25)';
             el.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            el.style.fontSize = '13px';
+            el.style.fontSize = '12px';
             el.style.border = '1.5px solid rgba(56, 189, 248, 0.6)';
             el.style.backdropFilter = 'blur(12px)';
             el.style.pointerEvents = 'auto';
             el.style.transition = 'all 0.2s ease-in-out';
-            el.style.maxWidth = 'min(820px, calc(100vw - 32px))';
+            el.style.maxWidth = 'min(560px, calc(100vw - 24px))';
             el.style.boxSizing = 'border-box';
             el.style.overflow = 'hidden';
             el.style.display = 'flex';
@@ -126,14 +136,14 @@ def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False
                 <button id="live-demo-next-btn" style="
                     background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
                     color: #ffffff;
-                    border: 1.5px solid #38bdf8;
-                    padding: 4px 14px;
-                    border-radius: 18px;
-                    font-size: 12px;
+                    border: 1px solid #38bdf8;
+                    padding: 3px 12px;
+                    border-radius: 14px;
+                    font-size: 11px;
                     font-weight: 700;
                     cursor: pointer;
-                    box-shadow: 0 4px 12px rgba(37,99,235,0.45);
-                    transition: transform 0.15s ease, box-shadow 0.15s ease;
+                    box-shadow: 0 2px 8px rgba(37,99,235,0.4);
+                    transition: transform 0.15s ease;
                     white-space: nowrap;
                     flex-shrink: 0;
                     margin-left: 6px;
@@ -146,12 +156,11 @@ def set_hud(page, badge: str, title: str, desc: str, show_next_btn: bool = False
             `;
         }}
 
-        el.setAttribute('title', descText);
+        el.setAttribute('title', descText ? (titleText + ' — ' + descText) : titleText);
         el.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0;flex:1;">
-                <span style="background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 11px; white-space: nowrap; flex-shrink: 0;">${{badgeText}}</span>
-                <strong style="color: #38bdf8; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; flex-shrink: 0;">${{titleText}}</strong>
-                <span style="color: #94a3b8; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">| ${{descText}}</span>
+            <div style="display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0;flex:1;">
+                <span style="background: #0284c7; color: #fff; padding: 2px 7px; border-radius: 8px; font-weight: bold; font-size: 10px; white-space: nowrap; flex-shrink: 0;">${{badgeText}}</span>
+                <strong style="color: #38bdf8; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;">${{titleText}}</strong>
             </div>
             ${{btnHtml}}
         `;
@@ -1381,18 +1390,27 @@ def run_live_demo():
         browser = p.chromium.launch(
             headless=args.headless,
             slow_mo=args.slow_mo,
-            args=["--start-maximized", "--window-size=1460,940"]
+            args=["--start-maximized"]
         )
         context = browser.new_context(
-            viewport={"width": 1440, "height": 900}
+            no_viewport=True if not args.headless else False,
+            viewport={"width": 1440, "height": 900} if args.headless else None
         )
         page = context.new_page()
+
+        if not args.headless:
+            try:
+                client = context.new_cdp_session(page)
+                win = client.send("Browser.getWindowForTarget")
+                client.send("Browser.setWindowBounds", {"windowId": win["windowId"], "bounds": {"windowState": "maximized"}})
+            except Exception:
+                pass
 
         try:
             print("\n▶️ [เริ่มต้น] เข้าสู่หน้าหลักระบบ Smart CRM Analytics...")
             page.goto(base_url, wait_until="networkidle")
             page.wait_for_timeout(1000)
-            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.1", "ระบบบริหารจัดการลูกค่าอัจฉริยะ (3NF SQLite + AI Data Science)")
+            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.1", "ระบบบริหารจัดการลูกค้าอัจฉริยะ (3NF SQLite + AI Data Science)")
 
             if args.scenario in ("case1", "lead-to-customer"):
                 run_slide_case1(page, base_url, args, step_offset=0, total_steps=7)
