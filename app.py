@@ -95,11 +95,37 @@ st.markdown("""
       background: #FFFFFF !important; border-radius: 12px !important;
       box-shadow: 0 1px 3px rgba(16,24,40,.06);
   }
+  /* st.form() ไม่ได้ห่อด้วย stVerticalBlockBorderWrapper เหมือน st.container(border=True) — ใช้
+     data-testid="stForm" ตรงๆ กฎด้านบนเลยไม่เคยจับฟอร์มได้เลย (พื้นหลัง/เงาไม่ขึ้น เห็นแค่ช่อง
+     input แต่ละช่องแปะติดกันบนพื้นเทาตรงๆ ไม่มีการ์ดครอบจริง) เพิ่มกฎแยกให้ฟอร์มด้วย */
+  [data-testid="stAppViewBlockContainer"] [data-testid="stForm"]:has(.card-shadow-marker) {
+      background: #FFFFFF !important; border-radius: 12px !important;
+      box-shadow: 0 1px 3px rgba(16,24,40,.06);
+      padding: 1.25rem 1.5rem !important;
+  }
   /* การ์ดโปรไฟล์ใน sidebar: โทนเข้มกลมกลืนกับ sidebar (ไม่ใช้พื้นขาว) */
   [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(.card-shadow-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .card-shadow-marker)) {
       background: #1D2231 !important; border-radius: 10px !important;
       border: 1px solid rgba(255,255,255,.08) !important;
   }
+
+  /* ช่องกรอกข้อมูล (text/number/date/textarea/select) — ธีมของเราตั้งพื้นหลังเป็นสีขาวล้วน
+     ทำให้เส้นขอบดีฟอลต์ของ Streamlit (คำนวณจากสีพื้นหลัง) กลายเป็นสีขาวจนมองไม่เห็นเส้นขอบเลย
+     ระบุเส้นขอบเทาอ่อนให้เห็นชัดเจนแทน พร้อมเว้นระยะรอบช่องกรอกให้ไม่อึดอัด */
+  [data-baseweb="input"],
+  [data-baseweb="textarea"],
+  [data-baseweb="select"] > div:first-child {
+      border: 1.5px solid #D0D3D9 !important;
+      border-radius: 8px !important;
+      background-color: #FFFFFF !important;
+  }
+  [data-baseweb="input"]:focus-within,
+  [data-baseweb="textarea"]:focus-within,
+  [data-baseweb="select"] > div:first-child:focus-within {
+      border-color: #FF7A1A !important;
+      box-shadow: 0 0 0 1px #FF7A1A !important;
+  }
+  [data-testid="stElementContainer"] { margin-bottom: .35rem; }
 </style>
 """, unsafe_allow_html=True)
 
