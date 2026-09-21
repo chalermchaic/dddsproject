@@ -14,6 +14,11 @@ import time
 import urllib.request
 from playwright.sync_api import sync_playwright
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 EVIDENCE = os.path.join(ROOT, "docs", "evidence")
 APP_PORT = 8503
@@ -45,17 +50,30 @@ def open_tab(page, tab_name: str) -> None:
     page.wait_for_timeout(1000)
 
 
+import re
+
+
 def login_as(page, base_url: str, username: str) -> None:
     page.goto(base_url, wait_until="networkidle")
     page.wait_for_timeout(800)
     if username == "guest":
-        btn = page.get_by_role("button", name="เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)")
-        if btn.count() > 0:
-            btn.click()
+        guest_btn = page.get_by_role("button").filter(has_text=re.compile(r"ผู้สนใจ|ลูกค้า"))
+        if guest_btn.count() > 0:
+            guest_btn.first.click()
         else:
-            page.get_by_role("button", name="🌐 เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)").click()
+            page.get_by_role("button", name="เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)").click()
     else:
-        page.get_by_role("button", name=f"เข้าใช้งานเป็น {username}").click()
+        legacy_btn = page.get_by_role("button", name=f"เข้าใช้งานเป็น {username}")
+        if legacy_btn.count() > 0 and legacy_btn.first.is_visible():
+            legacy_btn.first.click()
+        else:
+            user_marker = page.locator(f"[data-user='{username}']")
+            if user_marker.count() > 0:
+                card = page.locator("[data-testid='stVerticalBlockBorderWrapper']").filter(has=user_marker)
+                card.get_by_role("button", name="เข้าสู่ระบบ").first.click()
+            else:
+                card = page.locator("[data-testid='stVerticalBlockBorderWrapper']").filter(has_text=re.compile(rf"\b{username}\b", re.IGNORECASE))
+                card.get_by_role("button", name="เข้าสู่ระบบ").first.click()
     page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1200)
 

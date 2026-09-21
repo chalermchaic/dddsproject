@@ -161,7 +161,7 @@ def render_login(app_version: str = "") -> None:
         for i, r in enumerate(sub.itertuples()):
             with cols[i % len(cols)]:
                 with st.container(border=True):
-                    st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                    st.markdown(f'<span class="card-shadow-marker" data-user="{r.Username}"></span>', unsafe_allow_html=True)
                     st.markdown(f"**{r.Employee_Name}**  \n"
                                 f"<span style='color:#8A8F98;font-size:.85rem;'>"
                                 f"{r.Position} ({display_username(r.Username)})</span>",

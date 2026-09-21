@@ -59,6 +59,9 @@ def page(page):
     return page
 
 
+import re
+
+
 def shot(page, name: str) -> None:
     page.wait_for_timeout(800)
     page.screenshot(path=os.path.join(EVIDENCE, f"{name}.png"), full_page=True)
@@ -66,8 +69,24 @@ def shot(page, name: str) -> None:
 
 def login_as(page, base_url, username: str) -> None:
     page.goto(base_url, wait_until="networkidle")
+    page.wait_for_timeout(600)
     if username == "guest":
-        page.get_by_role("button", name="เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)").click()
+        guest_btn = page.get_by_role("button").filter(has_text=re.compile(r"ผู้สนใจ|ลูกค้า"))
+        if guest_btn.count() > 0:
+            guest_btn.first.click()
+        else:
+            page.get_by_role("button", name="เข้าเป็นผู้สนใจ / ลูกค้า (จำลอง)").click()
     else:
-        page.get_by_role("button", name=f"เข้าใช้งานเป็น {username}").click()
+        legacy_btn = page.get_by_role("button", name=f"เข้าใช้งานเป็น {username}")
+        if legacy_btn.count() > 0 and legacy_btn.first.is_visible():
+            legacy_btn.first.click()
+        else:
+            user_marker = page.locator(f"[data-user='{username}']")
+            if user_marker.count() > 0:
+                card = page.locator("[data-testid='stVerticalBlockBorderWrapper']").filter(has=user_marker)
+                card.get_by_role("button", name="เข้าสู่ระบบ").first.click()
+            else:
+                card = page.locator("[data-testid='stVerticalBlockBorderWrapper']").filter(has_text=re.compile(rf"\b{username}\b", re.IGNORECASE))
+                card.get_by_role("button", name="เข้าสู่ระบบ").first.click()
+    page.wait_for_load_state("networkidle")
     page.wait_for_timeout(1500)
