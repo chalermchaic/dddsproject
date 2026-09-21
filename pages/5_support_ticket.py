@@ -8,6 +8,7 @@ import auth
 from db.connection import cached_query, execute, next_id, run_query
 
 emp = auth.guard("admin", "support")
+auth.breadcrumb("รับแจ้งปัญหา")
 st.title("🎫 ระบบรับแจ้งปัญหา")
 st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
@@ -60,11 +61,13 @@ with tab1:
 
     tks = run_query(q, tuple(p))
     st.caption(f"พบ {len(tks)} เคส")
-    st.dataframe(tks.rename(columns={
-        "Ticket_ID": "รหัส", "Problem_Category": "ประเภท", "Problem_Title": "หัวข้อ",
-        "Ticket_Status": "สถานะ", "Assigned_Staff": "ผู้รับผิดชอบ",
-        "Created_At": "แจ้งเมื่อ", "Company_Name": "ลูกค้า"}),
-        use_container_width=True, hide_index=True, height=250)
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.dataframe(tks.rename(columns={
+            "Ticket_ID": "รหัส", "Problem_Category": "ประเภท", "Problem_Title": "หัวข้อ",
+            "Ticket_Status": "สถานะ", "Assigned_Staff": "ผู้รับผิดชอบ",
+            "Created_At": "แจ้งเมื่อ", "Company_Name": "ลูกค้า"}),
+            use_container_width=True, hide_index=True, height=250)
 
     if not tks.empty:
         st.divider()
@@ -75,74 +78,78 @@ with tab1:
 
         left, right = st.columns([2, 1])
         with left:
-            st.markdown(f"#### 💬 {trow.Problem_Title}")
-            msgs = run_query("""SELECT Sender_Type, Sender_Name, Message_Text, Sent_At
-                                FROM TICKET_MESSAGE WHERE Ticket_ID=?
-                                ORDER BY Sent_At""", (tid,))
-            for m in msgs.itertuples():
-                who = "user" if m.Sender_Type == "Customer" else "assistant"
-                with st.chat_message(who):
-                    st.markdown(f"**{m.Sender_Name}** · _{m.Sent_At[:16]}_")
-                    st.write(m.Message_Text)
+            with st.container(border=True):
+                st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                st.markdown(f"#### 💬 {trow.Problem_Title}")
+                msgs = run_query("""SELECT Sender_Type, Sender_Name, Message_Text, Sent_At
+                                    FROM TICKET_MESSAGE WHERE Ticket_ID=?
+                                    ORDER BY Sent_At""", (tid,))
+                for m in msgs.itertuples():
+                    who = "user" if m.Sender_Type == "Customer" else "assistant"
+                    with st.chat_message(who):
+                        st.markdown(f"**{m.Sender_Name}** · _{m.Sent_At[:16]}_")
+                        st.write(m.Message_Text)
 
-            new_msg = st.chat_input("พิมพ์ข้อความตอบกลับลูกค้า...")
-            if new_msg:
-                mid = next_id("TICKET_MESSAGE", "Message_ID", "MSG", 5)
-                execute("""INSERT INTO TICKET_MESSAGE
-                           (Message_ID,Ticket_ID,Sender_Type,Sender_Name,
-                            Message_Text,Sent_At) VALUES (?,?,?,?,?,?)""",
-                        (mid, tid, "Support_Staff", emp["name"],
-                         new_msg, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-                st.cache_data.clear()
-                st.rerun()
-
-        with right:
-            st.markdown("#### ⚙️ จัดการเคส (Process 4.2)")
-            with st.form("upd"):
-                ns = st.selectbox("สถานะ", STATUSES, index=STATUSES.index(trow.Ticket_Status))
-                _cur = trow.Assigned_Staff if trow.Assigned_Staff in SUPPORT_NAMES else None
-                staff_name = st.selectbox(
-                    "ผู้รับผิดชอบ", SUPPORT_NAMES,
-                    index=SUPPORT_NAMES.index(_cur) if _cur else 0)
-                cdate = st.date_input("วันที่ปิดเคส", value=date.today())
-                resolution = st.text_area("สรุปผลการแก้ไข (แจ้งลูกค้าเมื่อปิดเคส)",
-                                          height=70)
-                if st.form_submit_button("💾 อัปเดต", type="primary",
-                                         use_container_width=True):
-                    closed = f"{cdate} 17:00:00" if ns == "ปิดเคสสำเร็จ" else None
-                    execute("""UPDATE TICKET SET Ticket_Status=?, Employee_ID=?,
-                               Closed_At=? WHERE Ticket_ID=?""",
-                            (ns, SUPPORT_OPTS[staff_name], closed, tid))
-                    if ns == "ปิดเคสสำเร็จ" and resolution.strip():
-                        mid = next_id("TICKET_MESSAGE", "Message_ID", "MSG", 5)
-                        execute("""INSERT INTO TICKET_MESSAGE (Message_ID,Ticket_ID,
-                                   Sender_Type,Sender_Name,Message_Text,Sent_At)
-                                   VALUES (?,?,?,?,?,?)""",
-                                (mid, tid, "Support_Staff", emp["name"],
-                                 f"[สรุปผล] {resolution.strip()}",
-                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                new_msg = st.chat_input("พิมพ์ข้อความตอบกลับลูกค้า...")
+                if new_msg:
+                    mid = next_id("TICKET_MESSAGE", "Message_ID", "MSG", 5)
+                    execute("""INSERT INTO TICKET_MESSAGE
+                               (Message_ID,Ticket_ID,Sender_Type,Sender_Name,
+                                Message_Text,Sent_At) VALUES (?,?,?,?,?,?)""",
+                            (mid, tid, "Support_Staff", emp["name"],
+                             new_msg, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
                     st.cache_data.clear()
-                    st.success("อัปเดตเคสแล้ว")
                     st.rerun()
 
-            # ---- Process 4.3: ประเมินผลบริการ (ปกติลูกค้าให้ผ่าน Portal) ----
-            if trow.Ticket_Status == "ปิดเคสสำเร็จ":
-                cur_rating = run_query(
-                    "SELECT Service_Rating, Service_Feedback FROM TICKET WHERE Ticket_ID=?",
-                    (tid,)).iloc[0]
-                st.markdown("#### ⭐ ประเมินผลบริการ (Process 4.3)")
-                if pd.notna(cur_rating.Service_Rating):
-                    st.info(f"ลูกค้าให้ {int(cur_rating.Service_Rating)} ดาว — "
-                            f"{cur_rating.Service_Feedback or '(ไม่มีความเห็น)'}")
-                else:
-                    with st.form("rate"):
-                        sc = st.slider("คะแนน (แทนลูกค้า)", 1, 5, 5)
-                        fb = st.text_input("ความเห็น")
-                        if st.form_submit_button("บันทึกคะแนน"):
-                            execute("""UPDATE TICKET SET Service_Rating=?, Service_Feedback=?
-                                       WHERE Ticket_ID=?""", (sc, fb or None, tid))
-                            st.cache_data.clear()
-                            st.rerun()
+        with right:
+            with st.container(border=True):
+                st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                st.markdown("#### ⚙️ จัดการเคส (Process 4.2)")
+                with st.form("upd"):
+                    ns = st.selectbox("สถานะ", STATUSES, index=STATUSES.index(trow.Ticket_Status))
+                    _cur = trow.Assigned_Staff if trow.Assigned_Staff in SUPPORT_NAMES else None
+                    staff_name = st.selectbox(
+                        "ผู้รับผิดชอบ", SUPPORT_NAMES,
+                        index=SUPPORT_NAMES.index(_cur) if _cur else 0)
+                    cdate = st.date_input("วันที่ปิดเคส", value=date.today())
+                    resolution = st.text_area("สรุปผลการแก้ไข (แจ้งลูกค้าเมื่อปิดเคส)",
+                                              height=70)
+                    if st.form_submit_button("💾 อัปเดต", type="primary",
+                                             use_container_width=True):
+                        closed = f"{cdate} 17:00:00" if ns == "ปิดเคสสำเร็จ" else None
+                        execute("""UPDATE TICKET SET Ticket_Status=?, Employee_ID=?,
+                                   Closed_At=? WHERE Ticket_ID=?""",
+                                (ns, SUPPORT_OPTS[staff_name], closed, tid))
+                        if ns == "ปิดเคสสำเร็จ" and resolution.strip():
+                            mid = next_id("TICKET_MESSAGE", "Message_ID", "MSG", 5)
+                            execute("""INSERT INTO TICKET_MESSAGE (Message_ID,Ticket_ID,
+                                       Sender_Type,Sender_Name,Message_Text,Sent_At)
+                                       VALUES (?,?,?,?,?,?)""",
+                                    (mid, tid, "Support_Staff", emp["name"],
+                                     f"[สรุปผล] {resolution.strip()}",
+                                     datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                        st.cache_data.clear()
+                        st.success("อัปเดตเคสแล้ว")
+                        st.rerun()
+
+                # ---- Process 4.3: ประเมินผลบริการ (ปกติลูกค้าให้ผ่าน Portal) ----
+                if trow.Ticket_Status == "ปิดเคสสำเร็จ":
+                    cur_rating = run_query(
+                        "SELECT Service_Rating, Service_Feedback FROM TICKET WHERE Ticket_ID=?",
+                        (tid,)).iloc[0]
+                    st.markdown("#### ⭐ ประเมินผลบริการ (Process 4.3)")
+                    if pd.notna(cur_rating.Service_Rating):
+                        st.info(f"ลูกค้าให้ {int(cur_rating.Service_Rating)} ดาว — "
+                                f"{cur_rating.Service_Feedback or '(ไม่มีความเห็น)'}")
+                    else:
+                        with st.form("rate"):
+                            sc = st.slider("คะแนน (แทนลูกค้า)", 1, 5, 5)
+                            fb = st.text_input("ความเห็น")
+                            if st.form_submit_button("บันทึกคะแนน"):
+                                execute("""UPDATE TICKET SET Service_Rating=?, Service_Feedback=?
+                                           WHERE Ticket_ID=?""", (sc, fb or None, tid))
+                                st.cache_data.clear()
+                                st.rerun()
 
 # ---------------- แท็บ 2 ----------------
 with tab2:
@@ -151,6 +158,7 @@ with tab2:
                       ORDER BY cu.Customer_ID""")
     ps = run_query("SELECT Product_ID, Product_Name FROM PRODUCT")
     with st.form("new_ticket", clear_on_submit=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
         cust = st.selectbox("ลูกค้า *", cs.Customer_ID + " — " +
                             cs.Company_Name.fillna("") + " (" + cs.Full_Name + ")")
         c1, c2 = st.columns(2)
@@ -185,36 +193,48 @@ with tab2:
 with tab3:
     c1, c2 = st.columns(2)
     with c1:
-        d = cached_query("""SELECT Problem_Category AS ประเภท, COUNT(*) AS จำนวน
-                            FROM TICKET GROUP BY Problem_Category""")
-        st.plotly_chart(px.pie(d, names="ประเภท", values="จำนวน", hole=.5,
-                               title="สัดส่วนประเภทปัญหา"), use_container_width=True)
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            d = cached_query("""SELECT Problem_Category AS ประเภท, COUNT(*) AS จำนวน
+                                FROM TICKET GROUP BY Problem_Category""")
+            st.plotly_chart(px.pie(d, names="ประเภท", values="จำนวน", hole=.5,
+                                   title="สัดส่วนประเภทปัญหา").update_layout(
+                                       plot_bgcolor="white", paper_bgcolor="white"),
+                            use_container_width=True)
     with c2:
-        d = cached_query("""SELECT e.Employee_Name AS พนักงาน, COUNT(*) AS เคสทั้งหมด,
-                                   SUM(t.Ticket_Status='ปิดเคสสำเร็จ') AS ปิดสำเร็จ,
-                                   ROUND(AVG(julianday(t.Closed_At)-julianday(t.Created_At)),2)
-                                        AS 'เวลาเฉลี่ย (วัน)',
-                                   ROUND(AVG(t.Service_Rating),2) AS 'คะแนนเฉลี่ย'
-                            FROM TICKET t
-                            JOIN EMPLOYEE e ON e.Employee_ID = t.Employee_ID
-                            GROUP BY e.Employee_ID""")
-        st.markdown("#### ผลงานทีมซัพพอร์ต")
-        st.dataframe(d, use_container_width=True, hide_index=True)
-        avg = cached_query("SELECT ROUND(AVG(Service_Rating),2) r, COUNT(Service_Rating) n "
-                           "FROM TICKET").iloc[0]
-        st.metric("⭐ คะแนนบริการเฉลี่ย (Process 4.3)",
-                  f"{avg.r or 0}/5", f"จาก {int(avg.n)} รีวิว")
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            d = cached_query("""SELECT e.Employee_Name AS พนักงาน, COUNT(*) AS เคสทั้งหมด,
+                                       SUM(t.Ticket_Status='ปิดเคสสำเร็จ') AS ปิดสำเร็จ,
+                                       ROUND(AVG(julianday(t.Closed_At)-julianday(t.Created_At)),2)
+                                            AS 'เวลาเฉลี่ย (วัน)',
+                                       ROUND(AVG(t.Service_Rating),2) AS 'คะแนนเฉลี่ย'
+                                FROM TICKET t
+                                JOIN EMPLOYEE e ON e.Employee_ID = t.Employee_ID
+                                GROUP BY e.Employee_ID""")
+            st.markdown("#### ผลงานทีมซัพพอร์ต")
+            st.dataframe(d, use_container_width=True, hide_index=True)
+            avg = cached_query("SELECT ROUND(AVG(Service_Rating),2) r, COUNT(Service_Rating) n "
+                               "FROM TICKET").iloc[0]
+            st.metric("⭐ คะแนนบริการเฉลี่ย (Process 4.3)",
+                      f"{avg.r or 0}/5", f"จาก {int(avg.n)} รีวิว")
 
-    st.subheader("แนวโน้มจำนวนเคสรายเดือน")
-    d = cached_query("""SELECT strftime('%Y-%m',Created_At) AS เดือน,
-                               Problem_Category AS ประเภท, COUNT(*) AS จำนวน
-                        FROM TICKET GROUP BY เดือน, ประเภท ORDER BY เดือน""")
-    st.plotly_chart(px.line(d, x="เดือน", y="จำนวน", color="ประเภท", markers=True),
-                    use_container_width=True)
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.subheader("แนวโน้มจำนวนเคสรายเดือน")
+        d = cached_query("""SELECT strftime('%Y-%m',Created_At) AS เดือน,
+                                   Problem_Category AS ประเภท, COUNT(*) AS จำนวน
+                            FROM TICKET GROUP BY เดือน, ประเภท ORDER BY เดือน""")
+        st.plotly_chart(px.line(d, x="เดือน", y="จำนวน", color="ประเภท", markers=True)
+                        .update_layout(plot_bgcolor="white", paper_bgcolor="white"),
+                        use_container_width=True)
 
-    st.subheader("การกระจายของระยะเวลาแก้ปัญหา")
-    d = cached_query("""SELECT Problem_Category AS ประเภท,
-                               julianday(Closed_At)-julianday(Created_At) AS วัน
-                        FROM TICKET WHERE Closed_At IS NOT NULL""")
-    st.plotly_chart(px.box(d, x="ประเภท", y="วัน", color="ประเภท", points="outliers"),
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.subheader("การกระจายของระยะเวลาแก้ปัญหา")
+        d = cached_query("""SELECT Problem_Category AS ประเภท,
+                                   julianday(Closed_At)-julianday(Created_At) AS วัน
+                            FROM TICKET WHERE Closed_At IS NOT NULL""")
+        st.plotly_chart(px.box(d, x="ประเภท", y="วัน", color="ประเภท", points="outliers")
+                        .update_layout(plot_bgcolor="white", paper_bgcolor="white"),
                     use_container_width=True)

@@ -12,6 +12,7 @@ import auth
 from db.connection import execute, next_id, run_query, save_upload
 
 auth.guard("guest")
+auth.breadcrumb("Portal ผู้สนใจ/ลูกค้า")
 st.title("🌐 Portal ผู้สนใจ / ลูกค้า")
 st.caption("หน้านี้จำลองมุมของบุคคลภายนอก (Lead / Customer) ตาม Context DFD")
 
@@ -44,6 +45,7 @@ with t1:
                       "WHERE Campaign_Status='เปิดใช้งานอยู่' ORDER BY Start_Date DESC")
     cmap = {f"{r.Campaign_ID} — {r.Campaign_Name}": r.Campaign_ID for r in camps.itertuples()}
     with st.form("portal_reg", clear_on_submit=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         full = c1.text_input("ชื่อ-นามสกุล *")
         tel = c2.text_input("เบอร์โทรศัพท์ *", max_chars=20)
@@ -97,10 +99,12 @@ with t2:
         if q.empty:
             st.caption("ยังไม่มีใบเสนอราคา")
         else:
-            st.dataframe(q.rename(columns={
-                "Quotation_No": "เลขที่", "Quotation_Date": "วันที่",
-                "Total_Amount": "ยอดรวม", "Sale_Status": "สถานะ"}),
-                hide_index=True, use_container_width=True)
+            with st.container(border=True):
+                st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                st.dataframe(q.rename(columns={
+                    "Quotation_No": "เลขที่", "Quotation_Date": "วันที่",
+                    "Total_Amount": "ยอดรวม", "Sale_Status": "สถานะ"}),
+                    hide_index=True, use_container_width=True)
 
 # ============ 3.1 ยืนยันคำสั่งซื้อ ============
 with t3:
@@ -119,14 +123,16 @@ with t3:
                                FROM SALE_DETAIL d JOIN PRODUCT p ON p.Product_ID=d.Product_ID
                                WHERE d.Sale_ID=?""", (r.Sale_ID,))
             with st.expander(f"{r.Quotation_No} · ฿{r.Total_Amount:,.2f}", expanded=True):
-                st.dataframe(det, hide_index=True, use_container_width=True)
-                if st.button("✅ ยืนยันสั่งซื้อตามใบเสนอราคานี้", key=f"ord_{r.Sale_ID}",
-                             type="primary"):
-                    execute("""UPDATE SALE SET Sale_Status='รอตรวจสอบคำสั่งซื้อ',
-                               Order_Confirmed_At=? WHERE Sale_ID=?""", (NOW, r.Sale_ID))
-                    st.cache_data.clear()
-                    st.success(f"ส่งคำสั่งซื้อ {r.Sale_ID} แล้ว — รอทีมขายตรวจสอบ")
-                    st.rerun()
+                with st.container(border=True):
+                    st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                    st.dataframe(det, hide_index=True, use_container_width=True)
+                    if st.button("✅ ยืนยันสั่งซื้อตามใบเสนอราคานี้", key=f"ord_{r.Sale_ID}",
+                                 type="primary"):
+                        execute("""UPDATE SALE SET Sale_Status='รอตรวจสอบคำสั่งซื้อ',
+                                   Order_Confirmed_At=? WHERE Sale_ID=?""", (NOW, r.Sale_ID))
+                        st.cache_data.clear()
+                        st.success(f"ส่งคำสั่งซื้อ {r.Sale_ID} แล้ว — รอทีมขายตรวจสอบ")
+                        st.rerun()
 
 # ============ 3.2 อัปโหลดสลิป ============
 with t4:
@@ -145,17 +151,19 @@ with t4:
             with st.expander(f"{r.Quotation_No} · ฿{r.Total_Amount:,.2f}"
                              + (" · ✅ ส่งสลิปแล้ว" if r.Payment_Slip else ""),
                              expanded=not r.Payment_Slip):
-                up = st.file_uploader("แนบสลิปโอนเงิน (รูปภาพ/PDF)",
-                                      type=["png", "jpg", "jpeg", "pdf"],
-                                      key=f"slip_{r.Sale_ID}")
-                if up and st.button("📤 ส่งสลิป", key=f"sendslip_{r.Sale_ID}",
-                                    type="primary"):
-                    fname = save_upload(up, prefix=f"slip_{r.Sale_ID}")
-                    execute("UPDATE SALE SET Payment_Slip=? WHERE Sale_ID=?",
-                            (fname, r.Sale_ID))
-                    st.cache_data.clear()
-                    st.success("ส่งสลิปแล้ว — รอทีมขายตรวจสอบและออกใบเสร็จ")
-                    st.rerun()
+                with st.container(border=True):
+                    st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                    up = st.file_uploader("แนบสลิปโอนเงิน (รูปภาพ/PDF)",
+                                          type=["png", "jpg", "jpeg", "pdf"],
+                                          key=f"slip_{r.Sale_ID}")
+                    if up and st.button("📤 ส่งสลิป", key=f"sendslip_{r.Sale_ID}",
+                                        type="primary"):
+                        fname = save_upload(up, prefix=f"slip_{r.Sale_ID}")
+                        execute("UPDATE SALE SET Payment_Slip=? WHERE Sale_ID=?",
+                                (fname, r.Sale_ID))
+                        st.cache_data.clear()
+                        st.success("ส่งสลิปแล้ว — รอทีมขายตรวจสอบและออกใบเสร็จ")
+                        st.rerun()
 
 # ============ 3.3 (รับ) + 4.1 + 4.3 ============
 with t5:
@@ -186,15 +194,18 @@ with t5:
 <tr><th colspan=3 style='text-align:right'>ยอดสุทธิ</th>
 <th style='text-align:right'>{r.Total_Amount:,.2f}</th></tr></table>"""
             with st.expander(f"ใบเสร็จ {r.Invoice_No} · ฿{r.Total_Amount:,.2f}"):
-                st.markdown(html, unsafe_allow_html=True)
-                st.download_button("⬇️ ดาวน์โหลดใบเสร็จ (HTML)", html,
-                                   file_name=f"receipt_{r.Invoice_No}.html",
-                                   mime="text/html", key=f"rc_{r.Sale_ID}")
+                with st.container(border=True):
+                    st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                    st.markdown(html, unsafe_allow_html=True)
+                    st.download_button("⬇️ ดาวน์โหลดใบเสร็จ (HTML)", html,
+                                       file_name=f"receipt_{r.Invoice_No}.html",
+                                       mime="text/html", key=f"rc_{r.Sale_ID}")
 
         st.divider()
         st.markdown("**Process 4.1** — แจ้งปัญหา")
         ps = run_query("SELECT Product_ID, Product_Name FROM PRODUCT")
         with st.form("portal_ticket", clear_on_submit=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
             cat = st.selectbox("ประเภทปัญหา", CATS)
             prod = st.selectbox("สินค้าที่เกี่ยวข้อง", ["— ไม่ระบุ —"] +
                                 (ps.Product_ID + " — " + ps.Product_Name).tolist())
@@ -248,7 +259,9 @@ with t5:
                             SELECT 'แจ้งปัญหา', t.Created_At, t.Ticket_ID, NULL
                             FROM TICKET t WHERE t.Customer_ID=?
                             ORDER BY วันที่ DESC""", (me.Lead_ID, cid))
-        st.dataframe(hist, hide_index=True, use_container_width=True)
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            st.dataframe(hist, hide_index=True, use_container_width=True)
         st.download_button("⬇️ ดาวน์โหลดประวัติ (CSV)",
                            hist.to_csv(index=False).encode("utf-8-sig"),
                            file_name=f"history_{cid}.csv", mime="text/csv")

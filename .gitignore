@@ -124,3 +124,6 @@ test-results/
 .fuse_hidden*
 *.db-wal
 *.db-shm
+
+# Playwright MCP screenshots/logs (local verification only)
+.playwright-mcp/

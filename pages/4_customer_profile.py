@@ -7,6 +7,7 @@ from analytics.rfm_segmentation import SEGMENT_COLOR, build_rfm
 from db.connection import cached_query, run_query
 
 auth.guard("admin", "marketing", "sales", "support")
+auth.breadcrumb("ข้อมูลลูกค้า")
 st.title("👤 ข้อมูลลูกค้า")
 
 cust = cached_query("""
@@ -36,17 +37,19 @@ with tab1:
 
     a, b = st.columns([1, 2])
     with a:
-        st.markdown(f"""
-        #### 🏢 {row.Company_Name or '—'}
-        - **ผู้ติดต่อ:** {row.Full_Name}
-        - **โทร:** {row.Telephone or '—'}
-        - **อีเมล:** {row.Email or '—'}
-        - **ประเภท:** {row.Customer_Type}
-        - **เลขผู้เสียภาษี:** {row.Tax_ID or '—'}
-        - **ช่องทางที่มา:** {row.Source_Channel}
-        - **เป็นลูกค้าตั้งแต่:** {row.Membership_Date}
-        """)
-        st.caption(f"📍 {row.Billing_Address or '—'}")
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            st.markdown(f"""
+            #### 🏢 {row.Company_Name or '—'}
+            - **ผู้ติดต่อ:** {row.Full_Name}
+            - **โทร:** {row.Telephone or '—'}
+            - **อีเมล:** {row.Email or '—'}
+            - **ประเภท:** {row.Customer_Type}
+            - **เลขผู้เสียภาษี:** {row.Tax_ID or '—'}
+            - **ช่องทางที่มา:** {row.Source_Channel}
+            - **เป็นลูกค้าตั้งแต่:** {row.Membership_Date}
+            """)
+            st.caption(f"📍 {row.Billing_Address or '—'}")
 
     with b:
         rfm = build_rfm()
@@ -61,35 +64,42 @@ with tab1:
             m3.metric("มูลค่ารวม", f"฿{r.Monetary:,.0f}")
             m4.metric("กลุ่ม RFM", r.Segment)
 
-            fig = go.Figure(go.Scatterpolar(
-                r=[r.R_Score, r.F_Score, r.M_Score],
-                theta=["Recency", "Frequency", "Monetary"],
-                fill="toself", line_color=SEGMENT_COLOR.get(r.Segment, "#2E7D32")))
-            fig.update_layout(height=280, margin=dict(t=30, b=10),
-                              polar=dict(radialaxis=dict(range=[0, 5])),
-                              showlegend=False, title="คะแนน RFM (1–5)")
-            st.plotly_chart(fig, use_container_width=True)
+            with st.container(border=True):
+                st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+                fig = go.Figure(go.Scatterpolar(
+                    r=[r.R_Score, r.F_Score, r.M_Score],
+                    theta=["Recency", "Frequency", "Monetary"],
+                    fill="toself", line_color=SEGMENT_COLOR.get(r.Segment, "#2E7D32")))
+                fig.update_layout(height=280, margin=dict(t=30, b=10),
+                                  polar=dict(radialaxis=dict(range=[0, 5]), bgcolor="white"),
+                                  showlegend=False, title="คะแนน RFM (1–5)",
+                                  paper_bgcolor="white")
+                st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
     d1, d2 = st.columns(2)
     with d1:
-        st.markdown("#### 🛒 ประวัติการซื้อ")
-        st.dataframe(run_query("""
-            SELECT s.Invoice_No AS ใบแจ้งหนี้, s.Confirmed_At AS วันที่,
-                   s.Total_Amount AS ยอด
-            FROM SALE s JOIN CUSTOMER cu ON cu.Lead_ID=s.Lead_ID
-            WHERE cu.Customer_ID=? AND s.Sale_Status='ปิดการขายสำเร็จ'
-            ORDER BY s.Confirmed_At DESC""", (cid,)),
-            use_container_width=True, hide_index=True,
-            column_config={"ยอด": st.column_config.NumberColumn(format="฿%.2f")})
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            st.markdown("#### 🛒 ประวัติการซื้อ")
+            st.dataframe(run_query("""
+                SELECT s.Invoice_No AS ใบแจ้งหนี้, s.Confirmed_At AS วันที่,
+                       s.Total_Amount AS ยอด
+                FROM SALE s JOIN CUSTOMER cu ON cu.Lead_ID=s.Lead_ID
+                WHERE cu.Customer_ID=? AND s.Sale_Status='ปิดการขายสำเร็จ'
+                ORDER BY s.Confirmed_At DESC""", (cid,)),
+                use_container_width=True, hide_index=True,
+                column_config={"ยอด": st.column_config.NumberColumn(format="฿%.2f")})
     with d2:
-        st.markdown("#### 🎫 ประวัติแจ้งปัญหา")
-        st.dataframe(run_query("""
-            SELECT Ticket_ID AS รหัส, Problem_Category AS ประเภท,
-                   Problem_Title AS หัวข้อ, Ticket_Status AS สถานะ,
-                   Service_Rating AS คะแนน, Created_At AS แจ้งเมื่อ
-            FROM TICKET WHERE Customer_ID=? ORDER BY Created_At DESC""", (cid,)),
-            use_container_width=True, hide_index=True)
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            st.markdown("#### 🎫 ประวัติแจ้งปัญหา")
+            st.dataframe(run_query("""
+                SELECT Ticket_ID AS รหัส, Problem_Category AS ประเภท,
+                       Problem_Title AS หัวข้อ, Ticket_Status AS สถานะ,
+                       Service_Rating AS คะแนน, Created_At AS แจ้งเมื่อ
+                FROM TICKET WHERE Customer_ID=? ORDER BY Created_At DESC""", (cid,)),
+                use_container_width=True, hide_index=True)
 
     st.divider()
     st.markdown("#### 📋 ประวัติการสั่งซื้อและรับบริการ (Process 4.3)")
@@ -109,8 +119,10 @@ with tab1:
     r3.metric("คะแนนบริการเฉลี่ย",
               f"{combined['คะแนน'].dropna().mean():.1f}/5"
               if combined["คะแนน"].notna().any() else "—")
-    st.dataframe(combined, use_container_width=True, hide_index=True,
-                 column_config={"ยอดเงิน": st.column_config.NumberColumn(format="฿%.2f")})
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.dataframe(combined, use_container_width=True, hide_index=True,
+                     column_config={"ยอดเงิน": st.column_config.NumberColumn(format="฿%.2f")})
     st.download_button("⬇️ ดาวน์โหลดประวัติ (CSV)",
                        combined.to_csv(index=False).encode("utf-8-sig"),
                        file_name=f"history_{cid}.csv", mime="text/csv")
@@ -122,11 +134,13 @@ with tab2:
         m = (cust.Company_Name.fillna("").str.contains(kw) |
              cust.Full_Name.str.contains(kw))
         view = cust[m]
-    st.dataframe(view.rename(columns={
-        "Customer_ID": "รหัส", "Company_Name": "บริษัท", "Full_Name": "ผู้ติดต่อ",
-        "Customer_Type": "ประเภท", "Telephone": "โทร",
-        "Membership_Date": "เป็นลูกค้าตั้งแต่"}),
-        use_container_width=True, hide_index=True, height=430)
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.dataframe(view.rename(columns={
+            "Customer_ID": "รหัส", "Company_Name": "บริษัท", "Full_Name": "ผู้ติดต่อ",
+            "Customer_Type": "ประเภท", "Telephone": "โทร",
+            "Membership_Date": "เป็นลูกค้าตั้งแต่"}),
+            use_container_width=True, hide_index=True, height=430)
     st.download_button("⬇️ ดาวน์โหลดรายชื่อ (CSV)",
                        view.to_csv(index=False).encode("utf-8-sig"),
                        "customers.csv", "text/csv")

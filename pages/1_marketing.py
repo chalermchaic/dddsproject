@@ -7,6 +7,7 @@ import auth
 from db.connection import cached_query, execute, next_id, run_query
 
 emp = auth.guard("admin", "marketing")
+auth.breadcrumb("งานการตลาด")
 st.title("📢 งานการตลาด")
 st.caption(f"ผู้ใช้งาน: {emp['name']} ({emp['username']})")
 
@@ -59,28 +60,33 @@ with tab1:
     m3.metric("งบประมาณรวม", f"฿{df['งบประมาณ'].sum():,.0f}" if not df.empty else "฿0")
 
     display_cols = [c for c in df.columns if c != "Employee_ID"]
-    st.dataframe(
-        df[display_cols], use_container_width=True, hide_index=True,
-        column_config={
-            "งบประมาณ": st.column_config.NumberColumn(format="฿%.0f"),
-            "ต้นทุน/ผู้สนใจ": st.column_config.NumberColumn(format="฿%.0f"),
-            "อัตราแปลง %": st.column_config.ProgressColumn(
-                format="%.1f%%", min_value=0, max_value=100),
-        })
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.dataframe(
+            df[display_cols], use_container_width=True, hide_index=True,
+            column_config={
+                "งบประมาณ": st.column_config.NumberColumn(format="฿%.0f"),
+                "ต้นทุน/ผู้สนใจ": st.column_config.NumberColumn(format="฿%.0f"),
+                "อัตราแปลง %": st.column_config.ProgressColumn(
+                    format="%.1f%%", min_value=0, max_value=100),
+            })
 
     if not df.empty:
-        st.subheader("เปรียบเทียบงบประมาณกับจำนวนผู้สนใจ")
-        fig = px.scatter(df, x="งบประมาณ", y="ผู้สนใจ", size="ปิดได้",
-                         color="อัตราแปลง %", hover_name="ชื่อแคมเปญ",
-                         color_continuous_scale="Greens", size_max=45)
-        fig.update_layout(height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        with st.container(border=True):
+            st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+            st.subheader("เปรียบเทียบงบประมาณกับจำนวนผู้สนใจ")
+            fig = px.scatter(df, x="งบประมาณ", y="ผู้สนใจ", size="ปิดได้",
+                             color="อัตราแปลง %", hover_name="ชื่อแคมเปญ",
+                             color_continuous_scale="Greens", size_max=45)
+            fig.update_layout(height=380, plot_bgcolor="white", paper_bgcolor="white")
+            st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("ยังไม่มีแคมเปญที่คุณเป็นผู้รับผิดชอบ")
 
 # ---------------- แท็บ 2: สร้างแคมเปญ ----------------
 with tab2:
     with st.form("form_campaign", clear_on_submit=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         name = c1.text_input("ชื่อแคมเปญ *", placeholder="เช่น Year-End Mega Sale")
         status = c2.selectbox("สถานะ", ["เปิดใช้งานอยู่", "หมดอายุ"])
@@ -113,6 +119,7 @@ with tab3:
             for r in camps.itertuples()}
 
     with st.form("form_lead", clear_on_submit=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         full = c1.text_input("ชื่อ-นามสกุล *")
         tel = c2.text_input("เบอร์โทรศัพท์", max_chars=20)
@@ -136,10 +143,12 @@ with tab3:
                 st.cache_data.clear()
                 st.success(f"✅ บันทึกผู้สนใจ {lid} แล้ว — ส่งต่อให้ทีมขายติดตามได้เลย")
 
-    st.subheader("ผู้สนใจล่าสุด 15 รายการ")
-    st.dataframe(
-        run_query("""SELECT Lead_ID AS รหัส, Full_Name AS ชื่อ, Telephone AS โทร,
-                            Source_Channel AS ช่องทาง, Followup_Status AS สถานะ,
-                            Created_At AS บันทึกเมื่อ
-                     FROM LEAD ORDER BY Created_At DESC LIMIT 15"""),
-        use_container_width=True, hide_index=True)
+    with st.container(border=True):
+        st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
+        st.subheader("ผู้สนใจล่าสุด 15 รายการ")
+        st.dataframe(
+            run_query("""SELECT Lead_ID AS รหัส, Full_Name AS ชื่อ, Telephone AS โทร,
+                                Source_Channel AS ช่องทาง, Followup_Status AS สถานะ,
+                                Created_At AS บันทึกเมื่อ
+                         FROM LEAD ORDER BY Created_At DESC LIMIT 15"""),
+            use_container_width=True, hide_index=True)
