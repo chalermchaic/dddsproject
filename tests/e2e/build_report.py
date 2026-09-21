@@ -1,6 +1,11 @@
 """ประกอบ screenshot ใน docs/evidence/ เป็น README.md สำหรับแนบภาคผนวกรายงาน"""
 import glob
 import os
+import sys
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 
 EVID = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "evidence")
 
