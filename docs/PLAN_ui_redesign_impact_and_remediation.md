@@ -188,6 +188,14 @@
    * ปรับ Loop รอคำสั่งเป็น Non-blocking (`msvcrt.kbhit()`) ทำให้ยังคงรองรับการกด `[Enter]` ใน Terminal สำหรับผู้ที่มี 2 จอได้เช่นเดิม
    * ซ่อนปุ่มอัตโนมัติขณะที่สคริปต์กำลังคลิกทำงาน เพื่อป้องกันการกดเบิ้ล
 
+### เฟส 7: ปรับปรุงการแสดงผลของ Live Demo ให้เหมือนตอน Capture (Viewport & Single Logout Button) (สำเร็จ ✅)
+1. **ตัดปุ่ม Logout ซ้ำซ้อนที่ด้านบนออก:** นำปุ่มออกจากระบบที่การ์ดโปรไฟล์ผู้ใช้ออกตามคำสั่ง คงเหลือเฉพาะปุ่ม `ออกจากระบบ` ด้านล่างของ Sidebar ตามมาตรฐานเพียงปุ่มเดียว
+2. **คืนค่าระยะ `margin-top` ของ Sidebar Nav:** ปรับจาก 215px กลับเป็น 168px ใน [`app.py`](file:///c:/Users/momo/dev/dddsproject/app.py) เนื่องจากไม่ต้องเว้นที่ให้ปุ่มด้านบนแล้ว
+3. **แก้ไขสาเหตุที่ Chromium ล้นจอและปุ่ม Logout ด้านล่างหลุดขอบจอเฉพาะตอนรัน `live_browser_demo.py`:**
+   * สคริปต์ [`scripts/live_browser_demo.py`](file:///c:/Users/momo/dev/dddsproject/scripts/live_browser_demo.py) มีการส่งพารามิเตอร์ `no_viewport=True` ทำให้ Playwright ไม่บังคับขนาดหน้าจอ และเปิด Chromium ในขนาดหน้าต่างเริ่มต้นของระบบ (~1000x650) ส่งผลให้เนื้อหาฝั่งขวาแคบจนล้นจอ และความสูงไม่พอจนปุ่ม Logout หลุดขอบล่าง
+   * เทียบกับ [`tests/e2e/capture_manual_evidence.py`](file:///c:/Users/momo/dev/dddsproject/tests/e2e/capture_manual_evidence.py) ที่กำหนด `viewport={"width": 1440, "height": 900}` ชัดเจน จึงแสดงผลปกติ ไม่ล้นจอ
+   * แก้ไขโดยตัด `no_viewport=True` ออก และบังคับ `viewport={"width": 1440, "height": 900}` พร้อม `--window-size=1460,940` ใน `live_browser_demo.py` เพื่อให้ Chromium แสดงผลเหมือนกับตอน capture และเบราว์เซอร์ปกติ 100%
+
 ---
 
 ## ✅ เกณฑ์การยอมรับงาน (Acceptance Criteria / Definition of Done)
@@ -195,7 +203,9 @@
 * [x] ชุดการทดสอบ `pytest` (Unit, Smoke, DFD, E2E) ผ่านครบทั้งหมด (Green 100%)
 * [x] สคริปต์ `scripts/live_browser_demo.py` รันผ่านฉลุยทั้งแบบ 7 ขั้นตอน และ 18 ขั้นตอน โดยไม่เกิด Selector Timeout
 * [x] รองรับการนำเสนอสดแบบจอเดียว (Single Screen) คลิกปุ่มหรือเคาะ Spacebar บนหน้าต่างเบราว์เซอร์ได้ทันที ไม่ต้องสลับไปกดที่ Terminal
+* [x] ขนาดหน้าต่างและ Viewport ใน `live_browser_demo.py` เป็น 1440x900 เท่ากับตอน capture ไม่เกิดปัญหาฝั่งขวาล้นจอ และเห็นปุ่ม Logout ด้านล่างชัดเจน
 * [x] ภาพในโฟลเดอร์ `docs/evidence/` ทั้ง 27 รูปได้รับการอัปเดตเป็นธีมใหม่อย่างสมบูรณ์
 * [x] เอกสารคู่มือผู้ใช้ `docs/user_manual.md` เป็น Source of Truth ฉบับสมบูรณ์
 * [x] ลบไฟล์และสคริปต์สร้าง `user_manual.docx/.pdf`, `demo.pptx/.pdf`, `Precision_AI_CRM.pptx/.pdf` ออกจากโปรเจกต์เรียบร้อย
 * [x] โค้ดทั้งหมดพร้อมสำหรับ Merge กลับเข้า `ui-redesign` และ `master` อย่างมั่นใจ
+
