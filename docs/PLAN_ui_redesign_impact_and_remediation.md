@@ -132,16 +132,19 @@
 
 ---
 
-## 📸 รายละเอียดการ Capture หน้าจอใหม่สำหรับเอกสารทั้ง 4 ด้าน (Screen Capture Requirements)
+## 📸 รายละเอียดการ Capture หน้าจอและการจัดการเอกสาร (Documentation & Evidence Scope)
 
-เมื่อมีการปรับเปลี่ยน UI (เช่น เปลี่ยนเป็นธีม Dark-Orange หรือปรับฟอร์ม) **จำเป็นต้อง Re-capture หน้าจอใหม่ทั้งหมด** เพื่อไม่ให้เอกสารและสไลด์หลุดจากความเป็นจริง โดยมีรายละเอียดที่เกี่ยวข้องดังนี้:
+ตามข้อกำหนดโครงการล่าสุด **ได้ตัดการสร้างไฟล์ Binary (Word, PowerPoint, PDF) ออกจากขอบเขตงานทั้งหมด** เพื่อให้โฟลเดอร์โครงการกระชับและรักษา Markdown (`docs/*.md`) เป็น Source of Truth เพียงชุดเดียว:
 
-| เอกสารเป้าหมาย | แหล่งที่มา / เครื่องมือสร้าง | จำนวนภาพ & โฟลเดอร์ | วัตถุประสงค์และจุดสำคัญ |
-| :--- | :--- | :--- | :--- |
-| **1. User Manual**<br>(`user_manual.docx` / `user_manual.pdf`) | • `tests/e2e/capture_manual_evidence.py`<br>• `build_user_manual_docx.py`<br>• `export_manual_pdf.ps1` | **27 ภาพจริง**<br>ใน `docs/evidence/` | อธิบายการใช้งานครอบคลุม 14 กิจกรรมย่อย (DFD Process 1.0 – 5.0) และ Data Science Analytics 4 ด้าน แสดงปุ่ม การ์ด และผลลัพธ์จริงบน UI |
-| **2. Demo Deck**<br>(`demo.pptx` / `demo.pdf`) | • `build_demo_presentation.py`<br>• `export_demo_pdf.ps1` | **17 สไลด์**<br>(Split-View layout) | ฝั่งซ้ายเป็น Action Guide / คำพูดผู้บรรยาย ฝั่งขวาเป็นภาพหน้าจอจริงขนาดใหญ่จาก `docs/evidence/` เพื่อให้กรรมการและผู้ฟังเห็นภาพแม้ไม่ได้เปิดเว็บ |
-| **3. Project Presentation**<br>(`Precision_AI_CRM.pptx` / `Precision_AI_CRM.pdf`) | • `build_presentation.py`<br>• `export_pdf.ps1` | **17 สไลด์**<br>(Section 8 Demo Run-Sheets) | ใช้แสดงสถาปัตยกรรมและผลการทดสอบระบบต่ออาจารย์และผู้ตรวจโครงงาน |
-| **4. Live Interactive Demo**<br>(สคริปต์สาธิตระบบสด) | • `scripts/live_browser_demo.py`<br>(Standard 7 สเต็ป & Grand Tour 18 สเต็ป) | **Dynamic Chromium Session** พร้อม HUD Subtitles | รันสดให้คนดูเห็นการทำงานแบบ Real-time คลิกจริง บันทึก SQLite จริง ไม่มีการ mock ข้อมูล |
+* ❌ **ไฟล์ที่ยกเลิกการสร้างและลบออกจากโปรเจกต์:**
+  * `user_manual.docx`, `user_manual.pdf` (ลบสคริปต์ `build_user_manual_docx.py`, `export_manual_pdf.ps1`)
+  * `demo.pptx`, `demo.pdf` (ลบสคริปต์ `build_demo_presentation.py`, `export_demo_pdf.ps1`)
+  * `Precision_AI_CRM.pptx`, `Precision_AI_CRM.pdf` (ลบสคริปต์ `build_presentation.py`, `export_pdf.ps1`)
+
+* ✅ **เอกสารหลักที่คงไว้เป็น Source of Truth:**
+  * 📖 [`docs/user_manual.md`](file:///c:/Users/momo/dev/dddsproject/docs/user_manual.md) (คู่มือการใช้งานระบบฉบับสมบูรณ์ 14 กิจกรรม DFD พร้อมภาพประกอบ)
+  * 📸 [`docs/evidence/*.png`](file:///c:/Users/momo/dev/dddsproject/docs/evidence/) (ภาพหน้าจอจริง 27 ภาพในธีม Dark-Orange ที่ผ่านการแคปอัตโนมัติ)
+  * 🎬 [`scripts/live_browser_demo.py`](file:///c:/Users/momo/dev/dddsproject/scripts/live_browser_demo.py) (สคริปต์สาธิตระบบสดอัตโนมัติ Standard 7 ขั้นตอน และ Grand Tour 18 ขั้นตอน)
 
 ---
 
@@ -159,12 +162,13 @@
    * รัน `scripts/live_browser_demo.py --headless --scenario standard` ผ่านครบ 7 ขั้นตอน (100%)
    * รัน `scripts/live_browser_demo.py --headless --scenario grand` ผ่านครบ 18 ขั้นตอน (100%)
 
-### เฟส 3 & 4: Re-capture ภาพหลักฐานและสร้างเอกสารใหม่ (สำเร็จ ✅)
+### เฟส 3: Re-capture ภาพหลักฐานสำหรับคู่มือ Markdown (สำเร็จ ✅)
 1. รัน `tests/e2e/capture_manual_evidence.py` บันทึกภาพหน้าจอใหม่ครบทั้ง 27 ภาพลงใน `docs/evidence/`
-2. คอมไพล์เอกสารและแปลงเป็น PDF สำเร็จครบทุกฉบับ:
-   * 📄 `docs/user_manual.docx` (2.2 MB) & `docs/user_manual.pdf` (6.2 MB)
-   * 📊 `docs/demo.pptx` (1.4 MB) & `docs/demo.pdf` (1.8 MB)
-   * 📽️ `docs/Precision_AI_CRM.pptx` (2.1 MB) & `docs/Precision_AI_CRM.pdf` (5.9 MB)
+2. ภาพใน [`docs/user_manual.md`](file:///c:/Users/momo/dev/dddsproject/docs/user_manual.md) แสดงผลตรงตามธีม Dark-Orange ใหม่สมบูรณ์ 100%
+
+### เฟส 4: ลบการสร้างไฟล์เอกสาร Binary และสคริปต์ส่วนเกินออกจากโปรเจกต์ (สำเร็จ ✅)
+1. ลบสคริปต์ `build_*.py` และ `export_*.ps1` ทั้ง 6 ไฟล์ออกจาก Git
+2. ลบไฟล์ `.docx`, `.pptx`, `.pdf` ที่ไม่จำเป็นออกจากโฟลเดอร์ `docs/`
 
 ---
 
@@ -173,6 +177,6 @@
 * [x] ชุดการทดสอบ `pytest` (Unit, Smoke, DFD, E2E) ผ่านครบทั้งหมด (Green 100%)
 * [x] สคริปต์ `scripts/live_browser_demo.py` รันผ่านฉลุยทั้งแบบ 7 ขั้นตอน และ 18 ขั้นตอน โดยไม่เกิด Selector Timeout
 * [x] ภาพในโฟลเดอร์ `docs/evidence/` ทั้ง 27 รูปได้รับการอัปเดตเป็นธีมใหม่อย่างสมบูรณ์
-* [x] เอกสารคู่มือผู้ใช้ `docs/user_manual.md` และไฟล์ Docx/PDF แสดงผลตรงตามระบบจริง
-* [x] สไลด์นำเสนอ `demo.pptx` / `Precision_AI_CRM.pptx` และ PDF ส่งออกสำเร็จครบถ้วน
+* [x] เอกสารคู่มือผู้ใช้ `docs/user_manual.md` เป็น Source of Truth ฉบับสมบูรณ์
+* [x] ลบไฟล์และสคริปต์สร้าง `user_manual.docx/.pdf`, `demo.pptx/.pdf`, `Precision_AI_CRM.pptx/.pdf` ออกจากโปรเจกต์เรียบร้อย
 * [x] โค้ดทั้งหมดพร้อมสำหรับ Merge กลับเข้า `ui-redesign` และ `master` อย่างมั่นใจ
