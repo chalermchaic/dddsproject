@@ -1,5 +1,5 @@
 # 📖 คู่มือการใช้งานระบบบริหารจัดการความสัมพันธ์ลูกค้าอัจฉริยะ (User Manual)
-### Smart CRM & Data Science Analytics Platform (v1.2.2)
+### Smart CRM & Data Science Analytics Platform (v1.2.3)
 
 > **วิชา:** 070115302 การออกแบบฐานข้อมูลสำหรับวิทยาศาสตร์ข้อมูล (Database Design for Data Science: DDDS)  
 > **วัตถุประสงค์:** ภาคผนวกคู่มือปฏิบัติการ อธิบายการทำงานครอบคลุม 14 กิจกรรมย่อยตาม Data Flow Diagram (DFD Process 1.0 – 5.0) และ Data Science Analytics 4 ด้าน พร้อมภาพหน้าจอการทำงานจริงทั้งหมด

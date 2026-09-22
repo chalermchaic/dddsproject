@@ -1280,7 +1280,7 @@ def run_slide_case3(page, base_url: str, args, step_offset: int = 0, total_steps
     set_hud(page, "DEMO 17/17", "เคส 3: รายงานยอดขาย & Delivery Ready (Process 5.2)", "รายงานสรุปยอดขายผู้บริหาร พร้อมปุ่ม Export CSV ยืนยันความพร้อมส่งมอบ 100% ตามหลัก 3NF")
     click_tab(page, "รายงานสรุปยอดขาย", args.pause)
     time.sleep(args.pause * 1.5)
-    set_hud(page, "🎉 สำเร็จครบ 100%", "Smart CRM Analytics v1.2.2", "การสาธิตระบบตามสไลด์ crm-demo.pptx.pdf ครบถ้วน 100% พร้อมรับ Q&A")
+    set_hud(page, "🎉 สำเร็จครบ 100%", "Smart CRM Analytics v1.2.3", "การสาธิตระบบตามสไลด์ crm-demo.pptx.pdf ครบถ้วน 100% พร้อมรับ Q&A")
     print("    ✅ นำเสนอรายงานยอดขายผู้บริหารและระบบ Export CSV เสร็จสมบูรณ์")
 
 
@@ -1410,7 +1410,7 @@ def run_live_demo():
             print("\n▶️ [เริ่มต้น] เข้าสู่หน้าหลักระบบ Smart CRM Analytics...")
             page.goto(base_url, wait_until="networkidle")
             page.wait_for_timeout(1000)
-            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.2", "ระบบบริหารจัดการลูกค้าอัจฉริยะ (3NF SQLite + AI Data Science)")
+            set_hud(page, "ภาพรวมระบบ", "Smart CRM Analytics v1.2.3", "ระบบบริหารจัดการลูกค้าอัจฉริยะ (3NF SQLite + AI Data Science)")
 
             if args.scenario in ("case1", "lead-to-customer"):
                 run_slide_case1(page, base_url, args, step_offset=0, total_steps=7)
