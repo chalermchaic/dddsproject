@@ -69,6 +69,16 @@ st.markdown("""
   [data-testid="stTable"] table th.row_heading {
       display: none;
   }
+  /* เอาเส้นตารางออก ให้ st.table ดูโล่ง สะอาดตา เหมือนตารางในแอประดับมืออาชีพ
+     เหลือแค่เส้นบางๆ ใต้หัวตารางไว้แบ่งส่วนหัว/เนื้อหา */
+  [data-testid="stTable"] table { border: none !important; }
+  [data-testid="stTable"] table td,
+  [data-testid="stTable"] table th {
+      border: none !important;
+  }
+  [data-testid="stTable"] thead th {
+      border-bottom: 1.5px solid #E5E7EB !important;
+  }
   /* ดึงบล็อกโลโก้+โปรไฟล์ (มาร์กด้วย .sidebar-brand-marker) ออกจากลำดับปกติ ให้ "ลอย" ไปแปะไว้บนสุดของ
      sidebar เหนือเมนูนำทาง (Streamlit บังคับให้เมนูอยู่บนสุดเสมอ นี่คือทางเดียวที่ทำให้เห็นภาพเป็นโลโก้บนสุดได้) */
   [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlockBorderWrapper"]:has(.sidebar-brand-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .sidebar-brand-marker)) {

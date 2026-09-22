@@ -81,7 +81,9 @@ with t1:
         with st.container(border=True):
             st.markdown('<span class="card-shadow-marker"></span>', unsafe_allow_html=True)
             st.markdown("#### Classification Report")
-            st.code(r.report)
+            st.table(r.report_df.style.hide(axis="index").format({
+                "precision": "{:.2f}", "recall": "{:.2f}", "f1-score": "{:.2f}",
+            }, na_rep="—"))
 
     scored = ls.score_open_leads(r.model)
     if not scored.empty:
