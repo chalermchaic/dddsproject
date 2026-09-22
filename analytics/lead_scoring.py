@@ -60,6 +60,7 @@ class ScoringResult:
     roc: dict
     confusion: np.ndarray
     report: str
+    report_df: pd.DataFrame
     test_size: int
     train_size: int
     cv_auc: tuple = field(default=(0.0, 0.0))
@@ -131,12 +132,30 @@ def train(algo: str = "rf", test_ratio: float = 0.25) -> ScoringResult:
 
     fpr, tpr, _ = roc_curve(y_te, y_prob)
 
+    target_names = ["ไม่สนใจ", "ปิดการขายสำเร็จ"]
+    report_dict = classification_report(y_te, y_pred, zero_division=0,
+                                        target_names=target_names, output_dict=True)
+    rows = []
+    for lbl in target_names:
+        d = report_dict[lbl]
+        rows.append({"": lbl, "precision": d["precision"], "recall": d["recall"],
+                     "f1-score": d["f1-score"], "support": int(d["support"])})
+    rows.append({"": "accuracy", "precision": None, "recall": None,
+                 "f1-score": report_dict["accuracy"],
+                 "support": int(report_dict["macro avg"]["support"])})
+    for key in ["macro avg", "weighted avg"]:
+        d = report_dict[key]
+        rows.append({"": key, "precision": d["precision"], "recall": d["recall"],
+                     "f1-score": d["f1-score"], "support": int(d["support"])})
+    report_df = pd.DataFrame(rows)
+
     return ScoringResult(
         model=pipe, metrics=metrics, importance=imp,
         roc={"fpr": fpr, "tpr": tpr, "auc": metrics["ROC-AUC"]},
         confusion=confusion_matrix(y_te, y_pred),
         report=classification_report(y_te, y_pred, zero_division=0,
-                                     target_names=["ไม่สนใจ", "ปิดการขายสำเร็จ"]),
+                                     target_names=target_names),
+        report_df=report_df,
         train_size=len(X_tr), test_size=len(X_te),
         cv_auc=(round(cv.mean(), 4), round(cv.std(), 4)),
     )
